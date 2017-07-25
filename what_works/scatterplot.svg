@@ -1,0 +1,129 @@
+{% code %}
+from utils import attrs, common_params
+import layout
+_ = globals().get
+
+title = _('title', None)
+text = _('text', None)
+rotate = _('rotate', 0)
+
+pos = pd.DataFrame(index=data.index)
+pos['cx'] = data.apply(cx, axis=1)
+pos['cy'] = data.apply(cy, axis=1)
+pos['r'] = data.apply(_('r', lambda row:1), axis=1)
+pos['color'] = data.apply(_('color', lambda row:'#ccc'), axis=1)
+pos['r'] = _('R', 4) * pos['r'] / _('rhi', pos['r'].max())
+
+if _('regression', False):
+    import scipy.stats
+    b, a, r, p, stderr = scipy.stats.linregress(pos[['cx','cy']].dropna())
+    eq_text = []
+    if 'r2' in _('equation', []):
+        eq_text.append('R2={:,.1%}'.format(r*r))
+    if 'eq' in _('equation', []):
+        eq_text.append('y = %s x + %s' % (stats.format(b), stats.format(a)))
+    xlohi = [pos['cx'].min(), pos['cx'].max()]
+    ylohi = [pos['cy'].min(), pos['cy'].max()]
+    regline = [
+    1 - ((b * _('xlo', xlohi[0]) + a) - ylohi[0])/(ylohi[1] - ylohi[0]),
+    1 - ((b * _('xhi', xlohi[1]) + a) - ylohi[0])/(ylohi[1] - ylohi[0])
+    ]
+
+for start, dim, sign, coord in (('x', width, lambda v:v, 'cx'), ('y', height, lambda v: 1-v, 'cy')):
+    # if xlo, xhi or ylo, yhi are specified, just use them
+    if _(start + 'lo') is not None and _(start + 'hi') is not None:
+        lo = _(start + 'lo')
+        hi = _(start + 'hi')
+        pos[coord] = _(start, 0) + dim * sign((pos[coord] - lo) / (hi - lo))
+    else:
+        lo = pos[coord].min()
+        hi = pos[coord].max()
+        pos[coord] = dim * (pos[coord] - lo) / (hi - lo)
+        lo = (pos[coord] - pos['r']).min()
+        hi = (pos[coord] + pos['r']).max()
+        pos[coord] = _(start, 0) + dim * sign((pos[coord] - lo) / (hi - lo))
+
+if _('unpack', False):
+    points = layout.unpack(pos[['cx', 'cy']], pos['r'])
+    pos['cx'], pos['cy'] = points[:,0], points[:,1]
+{% end %}
+
+{% set line_yper, line_xper = float(line_ypos), 0 if float(line_xpos - xlo) < 0 else float(line_xpos - xlo) %}
+{# set rect1_h = height * line_yper / 100 #}
+{% set rect1_h = rect_h_s %}
+{% set rect2_h = height - rect1_h %}
+{% set rect1_w = (line_xper / (xhi - xlo)) * width %}
+{% code %}
+if rect1_w > width:
+  rect1_w = width
+{% end %}
+{% set rect2_w = width - rect1_w %}
+<defs>
+  <pattern id="pattern-stripe"
+           width="{{width / 10.}}" height="{{height / 10.}}" patternUnits="userSpaceOnUse">
+    <rect width="{{width / 10. -.3}}" height="{{height / 10. - .3}}" transform="translate(0,0)" fill="#fff"></rect>
+  </pattern>
+  <mask id="mask-stripe">
+    <rect x="0" y="0" width="100%" height="100%" fill="url(#pattern-stripe)" />
+  </mask>
+</defs>
+<g class="bars">
+  <rect height="{{rect1_h}}" width="{{rect1_w}}" x="0" y="0" style="fill:#A38B46"></rect>
+  <line x1="0" y1="{{rect1_h}}" x2="{{rect1_w}}" y2="{{rect1_h}}" style="stroke:#000;stroke-width:2" />
+  <line x1="{{rect1_w}}" y1="{{0}}" x2="{{rect1_w}}" y2="{{rect1_h}}" style="stroke:#000;stroke-width:2"/>
+  <rect height="{{rect1_h}}" width="{{rect2_w}}" x="{{rect1_w}}" y="0" style="fill:#628639"></rect>
+  <line x1="{{rect1_w}}" y1="{{rect1_h}}" x2="{{width}}" y2="{{rect1_h}}" style="stroke:#000;stroke-width:2" />
+  <rect height="{{rect2_h}}" width="{{rect1_w}}" x="0" y="{{rect1_h}}" style="fill:#c0504d"></rect>
+  <line x1="{{rect1_w}}" y1="{{rect1_h}}" x2="{{rect1_w}}" y2="{{height}}" style="stroke:#000;stroke-width:2"/>
+  <rect height="{{rect2_h}}" width="{{rect2_w}}" x="{{rect1_w}}" y="{{rect1_h}}" style="fill:#A38B46"></rect>
+  {% if rect1_w > 130 %}
+    {% if rect1_h > 5 %}
+      <text class="qdrnt_lbls" text-anchor="middle" x="{{rect1_w / 2.}}" y="{{rect1_h / 2.}}">High {{metric}} - Low Affinity</text>
+    {% end %}
+    {% if rect2_h > 5 %}
+      <text class="qdrnt_lbls" text-anchor="middle" x="{{rect1_w / 2.}}" y="{{rect1_h + rect2_h / 2.}}">Low {{metric}} - Low Affinity</text>
+    {% end %}
+  {% end %}
+  {% if rect2_w > 130 %}
+    {% if rect1_h > 5 %}
+      <text class="qdrnt_lbls" text-anchor="middle" x="{{rect1_w + rect2_w / 2.}}" y="{{rect1_h / 2.}}">High {{metric}} - High Affinity</text>
+    {% end %}
+    {% if rect2_h > 5 %}
+      <text class="qdrnt_lbls" text-anchor="middle" x="{{rect1_w + rect2_w / 2.}}" y="{{rect1_h + rect2_h / 2.}}">Low {{metric}} - High Affinity</text>
+    {% end %}
+  {% end %}
+</g>
+{% set i = 0 %}
+{% for index, row in pos.iterrows() %}
+  {% set datarow = data.ix[index] %}
+  {% set px = '%.4f' % row['cx'] %}
+  {% set py = '%.4f' % row['cy'] %}
+
+  {% set i += 1 %}
+
+  {% if i == 1 %}
+  <circle style="display:none" cx="{{ px }}" cy="{{ py }}" r="{{ 0 }}"
+    {{ attrs(_('attrs'), {'fill': row['color'], 'stroke': '#fff', 'stroke-width': '0.4px'}, datarow, index) }}
+  {% if title %}><title>{{ title(datarow) }}</title></circle>{% else %}/>{% end %}
+  {% end %}
+
+  <circle cx="{{ px }}" cy="{{ py }}" r="{{ '%.4f' % row['r'] }}"
+    {{ attrs(_('attrs'), {'fill': row['color'], 'stroke': '#fff', 'stroke-width': '0.4px'}, datarow, index) }}
+  {% if title %}><title>{{ title(datarow) }}</title></circle>
+  {% else %}/>
+  {% end %}
+  {% if text %}
+    <text x="{{ px }}" y="{{ py }}"
+      {% if rotate %}transform="rotate({{ rotate }} {{ px }} {{ py }})"{% end %}
+      {{ attrs(_('textattrs'), {'text-anchor': 'middle', 'dominant-baseline': 'middle'}) }}>{{ text(datarow) }}</text>
+  {% end %}
+{% end %}
+{% if _('regression', False) %}
+  {% set x0, y0 = _('x', 0), _('y', 0) %}
+  <path id="scatterpath" d="M{{ x0 }},{{ y0 + height*regline[0] }}L{{ x0 + width }},{{ y0 + height*regline[1] }}" stroke="#000"/>
+  {% if eq_text %}<text x="{{ x0 }}" y="{{ b*x0 + a }}">
+    <textPath xlink:href="#scatterpath">
+      <tspan dy="-2">{{ '. '.join(eq_text) }}</tspan>
+    </textPath>
+  </text>{% end %}
+{% end %}

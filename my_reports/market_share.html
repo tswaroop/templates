@@ -1,0 +1,292 @@
+{% code %}
+#user = handler.get_current_user()
+#roles = handler.auth.roles(handler.get_current_user())
+#user_id = 'JAINA'
+import re
+from tornado.web import HTTPError
+from admin.auth import AuthError
+#pattern = re.compile("starin[^\w']")
+#user_id = pattern.sub('', handler.get_current_user()).upper()
+user_id = handler.get_current_user().upper().split('\\')[1]
+if user_id in ['GRAMENER_SSO_TEST1', 'GRAMENER_SSO_TEST2', 'ADMIN']:
+    user_id = 'JAINA'
+user_key = emp_hierarchy[emp_hierarchy['EMPLOYEE_NT_ID'] == user_id]['EMPLOYEE_KEY']
+
+'''
+if len(user_key) == 1:
+    valid_user = True if len(emp_access[emp_access['EMPLOYEE_KEY'] == user_key.values[0]]) else False
+else:
+    valid_user = False
+
+if not valid_user:
+    raise HTTPError(401, '%s not allowed' % user_id)
+'''
+roles = [emp_hierarchy[emp_hierarchy['EMPLOYEE_NT_ID'] == user_id]['EMPLOYEE_ROLE'].values[0]]
+user_name = emp_hierarchy[emp_hierarchy['EMPLOYEE_NT_ID'] == user_id]['EMPLOYEE_NAME'].values[0]
+
+# emp_key = 1019
+
+if 'HO GROUP' not in roles:
+    emps_reporting = DB['emp_keys'].get(user_name.replace('_', " ").upper(), [])
+    emp_acc = emp_access[emp_access['EMPLOYEE_KEY'].astype(str).isin(emps_reporting)]
+    ho_group = 'no'
+else:
+    print 'HO'
+    emp_acc = emp_access
+    ho_group = 'yes'
+
+
+my_emps_reporting = ';'.join(emp_acc['EMPLOYEE_KEY'].unique())
+my_locs = ';'.join(emp_acc['LOCATION_KEY'].astype(str).unique())
+{% end %}
+<div class="row market_share">
+  <div class="col-md-12 col-md-offset-2">
+    <div class="col-md-2 date_wk">
+      <ul class="nav navbar-nav form-filters">
+        <li class="filter-col dropdown control" style="padding-left:25px;">
+          <button class="dropdown-toggle btn btn-default" data-toggle="dropdown">
+            Time Period<span class="caret"></span></button>
+          <ul class="dropdown-menu dropdown-menu-form" role="menu">
+            <li style="width: 320px;">
+              <div class="input-daterange input-group item week-picker" style="display: table;">
+                <span class="input-group-addon">From</span>
+                <input onkeydown="return false" type="text" class="input-sm form-control mktshr_from_week from_dt" name="Date" value="" autocomplete="off"/>
+                <span class="input-group-addon">To</span>
+                <input onkeydown="return false" type="text" class="input-sm form-control mktshr_to_week to_dt" name="Date" value="" autocomplete="off"/>
+              </div>
+            </li>
+          </ul>
+        </li>
+      </ul>
+      <p class="display_selection"></p>
+    </div>
+    <div class="col-md-2">
+      <div class="dropdown">
+        <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+          Layout
+          <span class="caret"></span>
+        </button>
+        <p class="display_selection"></p>
+        <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+          <li><a class="layout_selection filter_selection" data-filter="mktshr_layout_selection" data-value="client" >Client</a></li>
+          <li><a class="layout_selection filter_selection" data-filter="mktshr_layout_selection"  data-value="brand" >Brand</a></li>
+          <li><a class="layout_selection filter_selection" data-filter="mktshr_layout_selection"  data-value="industry" >Industry</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="dropdown">
+        <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">
+          TG-MARKET
+          <span class="caret"></span>
+        </button>
+        <p class="display_selection"></p>
+        <ul class="dropdown-menu overflow">
+          <li><a><input type="text" class="search search_filter" placeholder="Search for a TG-MARKET"></a></li>
+          <li><a class="genre_selection filter_selection" data-filter="mktshr_genre_selection"  data-value="genre_tg_mkt">Genre TG - MKT</a></li>
+          <li><a>Select TG - MKT </a></li>
+          {% for index, row in ref_tg_mkt.iterrows() %}
+            {% set row_text = row['TG_MARKET_DISPLAY_NAME'] %}
+            <li><a class="genre_selection filter_selection" data-filter="mktshr_genre_selection"   data-value="{{str(row['TG_KEY'])+'-'+str(row['MARKET_KEY'])}}" data-search="{{row_text}}"> {{ row_text }}</a></li>
+          {% end %}
+        </ul>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="dropdown">
+        <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+          Clients
+          <span class="caret"></span>
+        </button>
+        <p class="display_selection"></p>
+        <ul class="dropdown-menu">
+          <li><a class="client_selection filter_selection" data-filter="mktshr_client_selection"   data-value="my_clients">My Clients</a></li>
+          <li><a class="client_selection filter_selection" data-filter="mktshr_client_selection" data-value="region_clients">Region Clients</a></li>
+          <li><a class="client_selection filter_selection" data-filter="mktshr_client_selection" data-value="all_clients">All Clients</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row generate">
+  <input type="submit" class="btn btn-secondary market_share_submit" value="Generate Report">
+</div>
+
+
+
+<script type="text/javascript">
+  var ho_group = "{{ho_group}}";
+  console.log(ho_group)
+  $('.market_share_submit').click(function(){
+    var layout_selected = $('[data-filter=mktshr_layout_selection]').parents('li.active').find('a').attr('data-value');
+    var client_selected = $('[data-filter=mktshr_client_selection]').parents('li.active').find('a').attr('data-value');
+    var genre_selected = $('[data-filter=mktshr_genre_selection]').parents('li.active').find('a').attr('data-value');
+    var weeks_selected = week_dp_selected('mktshr')
+    var weeks_join = weeks_selected.join(';');
+    var form_valid = true;
+
+    console.log(layout_selected, client_selected, genre_selected)
+    if(form_valid){
+      var base_url = 'http://' + star_bo_ip + ':8080/BOE/OpenDocument/opendoc/openDocument.jsp?&sIDType=CUID&sType=wid&sRefresh=Y&lsMDATE_KEY='+ weeks_join;
+
+
+      // Client - Genre TG-MKT - All client
+      if (layout_selected == 'client' && client_selected == 'all_clients' && genre_selected == 'genre_tg_mkt'){
+        var url = base_url + '&iDocID=AV3eZISeJy5Fg883HpEVRis';
+        console.log(genre_selected, 'genre_selected')
+      }
+
+      // Client - Genre TG-MKT -My Client
+      else if (layout_selected == 'client' && client_selected == 'my_clients' && genre_selected == 'genre_tg_mkt'){
+          if (ho_group == 'yes'){
+            var url = base_url + '&iDocID=AV3eZISeJy5Fg883HpEVRis'
+          }
+          else{
+          var url = base_url + '&iDocID=AV3eZISeJy5Fg883HpEVRis' + '&lsMEMP_KEY=' + "{{my_emps_reporting}}"
+          }
+      }
+
+      // Client - Genre TG-MKT - Region
+      else if (layout_selected == 'client' && client_selected == 'region_clients' && genre_selected == 'genre_tg_mkt'){
+          if (ho_group == 'yes'){
+            var url = base_url + '&iDocID=AV3eZISeJy5Fg883HpEVRis';
+          }
+          else{
+            var url = base_url + '&iDocID=AV3eZISeJy5Fg883HpEVRis' + '&lsMREG_KEY=' + "{{my_locs}}";
+          }
+
+      }
+
+
+      // Client - Select TG-MKT- All client
+      else if (layout_selected == 'client' && client_selected == 'all_clients' && genre_selected != 'genre_tg_mkt'){
+          url = base_url + '&iDocID=AfK_YZfcd3pLpq9rhV_pbJ8' + '&lsMTG_MKT_KEY=' + genre_selected;
+      }
+
+      // Client - Select TG-MKT- My Client
+      else if (layout_selected == 'client' && client_selected == 'my_clients' && genre_selected != 'genre_tg_mkt'){
+          if(ho_group == 'yes'){
+            url = base_url + '&iDocID=AfK_YZfcd3pLpq9rhV_pbJ8' + '&lsMTG_MKT_KEY=' + genre_selected;
+          }
+          else{
+            url = base_url + '&iDocID=AfK_YZfcd3pLpq9rhV_pbJ8' + '&lsMEMP_KEY=' + "{{my_emps_reporting}}" + '&lsMTG_MKT_KEY=' + genre_selected;
+
+          }
+      }
+
+      // Client - Select TG-MKT- Reg Client
+      else if (layout_selected == 'client' && client_selected == 'region_clients' && genre_selected != 'genre_tg_mkt'){
+        if(ho_group == 'yes'){
+          url = base_url + '&iDocID=AfK_YZfcd3pLpq9rhV_pbJ8' + '&lsMTG_MKT_KEY=' + genre_selected;
+        }
+        else{
+          url = base_url + '&iDocID=AfK_YZfcd3pLpq9rhV_pbJ8' + '&lsMREG_KEY=' + "{{my_locs}}" + '&lsMTG_MKT_KEY=' + genre_selected;
+        }
+      }
+
+      // Brand - Genre TG-MKT- All Client
+      else if (layout_selected == 'brand' && client_selected == 'all_clients' && genre_selected == 'genre_tg_mkt'){
+        var url = base_url + '&iDocID=AVMIqrq4syFJg7GPCgnN.KE';
+      }
+
+      // Brand - Genre TG-MKT -My Client
+      else if (layout_selected == 'brand' && client_selected == 'my_clients' && genre_selected == 'genre_tg_mkt'){
+        if (ho_group == 'yes'){
+          var url = base_url + '&iDocID=AVMIqrq4syFJg7GPCgnN.KE';
+        }
+        else{
+          var url = base_url + '&iDocID=AVMIqrq4syFJg7GPCgnN.KE' + '&lsMEMP_KEY=' + "{{my_emps_reporting}}";
+        }
+      }
+
+      // Brand - Genre TG-MKT -Reg Client
+      else if (layout_selected == 'brand' && client_selected == 'region_clients' && genre_selected == 'genre_tg_mkt'){
+        if (ho_group == 'yes'){
+          var url = base_url + '&iDocID=AVMIqrq4syFJg7GPCgnN.KE';
+        }
+        else{
+          var url = base_url + '&iDocID=AVMIqrq4syFJg7GPCgnN.KE' + '&lsMREG_KEY=' + "{{my_locs}}";
+        }
+      }
+
+      // Brand - Select TG-MKT- All client
+      else if (layout_selected == 'brand' && client_selected == 'all_clients' && genre_selected != 'genre_tg_mkt'){
+          url = base_url + '&iDocID=Ac8PB1eDVgJNlSd5BQ2EmhI' + '&lsMTG_MKT_KEY=' + genre_selected;
+      }
+
+      // Brand - Select TG-MKT- My Client
+      else if (layout_selected == 'brand' && client_selected == 'my_clients' && genre_selected != 'genre_tg_mkt'){
+        if (ho_group == 'yes'){
+          url = base_url + '&iDocID=Ac8PB1eDVgJNlSd5BQ2EmhI' + '&lsMTG_MKT_KEY=' + genre_selected;
+        }
+        else{
+          url = base_url + '&iDocID=Ac8PB1eDVgJNlSd5BQ2EmhI' + '&lsMEMP_KEY=' + "{{my_emps_reporting}}" + '&lsMTG_MKT_KEY=' + genre_selected;
+        }
+      }
+
+      // Brand - Select TG-MKT- Reg Client
+      else if (layout_selected == 'brand' && client_selected == 'region_clients' && genre_selected != 'genre_tg_mkt'){
+        if(ho_group == 'yes'){
+          url = base_url + '&iDocID=Ac8PB1eDVgJNlSd5BQ2EmhI' + '&lsMTG_MKT_KEY=' + genre_selected;
+        }
+        else{
+          url = base_url + '&iDocID=Ac8PB1eDVgJNlSd5BQ2EmhI' + '&lsMREG_KEY=' + "{{my_locs}}" + '&lsMTG_MKT_KEY=' + genre_selected;
+        }
+      }
+      // Industry - Genre TG-MKT- All Client
+      else if (layout_selected == 'industry' && client_selected == 'all_clients' && genre_selected == 'genre_tg_mkt'){
+        var url = base_url + '&iDocID=AZDI8beDvldHrrwufP_L_gM';
+      }
+
+      // Industry - Genre TG-MKT -My Client
+      else if (layout_selected == 'industry' && client_selected == 'my_clients' && genre_selected == 'genre_tg_mkt'){
+        if(ho_group == 'yes'){
+          var url = base_url + '&iDocID=AZDI8beDvldHrrwufP_L_gM'
+        }
+        else{
+          var url = base_url + '&iDocID=AZDI8beDvldHrrwufP_L_gM' + '&lsMEMP_KEY=' + "{{my_emps_reporting}}";
+        }
+      }
+
+      // Industry - Genre TG-MKT -Reg Client
+      else if (layout_selected == 'industry' && client_selected == 'region_clients' && genre_selected == 'genre_tg_mkt'){
+        if (ho_group == 'yes'){
+          var url = base_url + '&iDocID=AZDI8beDvldHrrwufP_L_gM';
+        }
+        else{
+          var url = base_url + '&iDocID=AZDI8beDvldHrrwufP_L_gM' + '&lsMREG_KEY=' + "{{my_locs}}";
+        }
+      }
+
+      // Industry - Select TG-MKT- All client
+      else if (layout_selected == 'industry' && client_selected == 'all_clients' && genre_selected != 'genre_tg_mkt'){
+          url = base_url + '&iDocID=Acxc8KU5k_xAnkJ3kAlx8eE' + '&lsMTG_MKT_KEY=' + genre_selected;
+      }
+
+      // Industry - Select TG-MKT- My Client
+      else if (layout_selected == 'industry' && client_selected == 'my_clients' && genre_selected != 'genre_tg_mkt'){
+        if(ho_group == 'yes'){
+          url = base_url + '&iDocID=Acxc8KU5k_xAnkJ3kAlx8eE' + '&lsMTG_MKT_KEY=' + genre_selected;
+        }
+        else{
+          url = base_url + '&iDocID=Acxc8KU5k_xAnkJ3kAlx8eE' + '&lsMEMP_KEY=' + "{{my_emps_reporting}}" + '&lsMTG_MKT_KEY=' + genre_selected;
+        }
+      }
+
+      // Industry - Select TG-MKT- Reg Client
+      else if (layout_selected == 'industry' && client_selected == 'region_clients' && genre_selected != 'genre_tg_mkt'){
+        if(ho_group == 'yes'){
+          url = base_url + '&iDocID=Acxc8KU5k_xAnkJ3kAlx8eE' + '&lsMTG_MKT_KEY=' + genre_selected;
+        }
+        else{
+          url = base_url + '&iDocID=Acxc8KU5k_xAnkJ3kAlx8eE' + '&lsMREG_KEY=' + "{{my_locs}}" + '&lsMTG_MKT_KEY=' + genre_selected;
+        }
+      }
+    console.log(url)
+    var win = window.open(url, '_blank');
+    }
+
+
+  })
+</script>

@@ -1,0 +1,81 @@
+{% code %}
+ref_genre_tg.sort(['GENRE_NAME'], inplace=True)
+genre_tg_mkt['TG_DISPLAY_NAME-MARKET_DISPLAY_NAME'] = genre_tg_mkt['TG_MARKET_DISPLAY_NAME']
+{% end %}
+<div class="row genre_performance">
+  <div class="col-md-12 col-md-offset-3">
+    <div class="col-md-2 date_wk">
+      <ul class="nav navbar-nav">
+        <li class="dropdown control">
+          <button class="dropdown-toggle btn btn-default" data-toggle="dropdown">
+            Time Period<span class="caret"></span></button>
+          <ul class="dropdown-menu dropdown-menu-form" role="menu">
+            <li style="width: 320px;">
+              <div class="input-daterange input-group item week-picker" style="display: table;">
+                <span class="input-group-addon"></span>
+                <input onkeydown="return false" type="text" class="input-sm form-control gp_week from_dt" name="Date" value="" autocomplete="off"/>
+              </div>
+            </li>
+          </ul>
+        </li>
+      </ul>
+      <p class="display_selection" style="padding-right:42px"></p>
+    </div>
+    <div class="col-md-2">
+      <div class="dropdown">
+        <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+          Genre
+          <span class="caret"></span>
+        </button>
+        <p class="display_selection"></p>
+        <ul class="dropdown-menu overflow">
+          <li><a><input type="text" class="search search_filter" placeholder="Search for a GENRE"></a></li>
+          {% for genre in ref_genre_tg['GENRE_NAME'].unique() %}
+            {% set genre_key = ref_genre_tg[ref_genre_tg['GENRE_NAME'] == genre]['GENRE_KEY'].unique()[0] %}
+            <li><a class="genre_selection filter_selection" data-filter="gp_genre_selection" data-value="{{genre_key}}" data-search="{{genre}}">{{genre}}</a></li>
+          {% end %}
+        </ul>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="dropdown">
+        <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+          TG-MARKET
+          <span class="caret"></span>
+        </button>
+        <p class="display_selection"></p>
+        <ul class="dropdown-menu overflow">
+          <li><a><input type="text" class="search search_filter" placeholder="Search for a TG-MARKET"></a></li>
+          {% for tg_mkt in  genre_tg_mkt['TG_DISPLAY_NAME-MARKET_DISPLAY_NAME'].unique() %}
+            {% set tg_mkt_row = genre_tg_mkt[genre_tg_mkt['TG_DISPLAY_NAME-MARKET_DISPLAY_NAME'] == tg_mkt] %}
+            {% set tg_key = tg_mkt_row['TG_KEY'].values[0] %}
+            {% set mkt_key = tg_mkt_row['MARKET_KEY'].values[0] %}
+            <li><a class="tg_mkt_selection filter_selection" data-filter="gp_tg_selection" data-value="{{str(tg_key) + '-' + str(mkt_key)}}" data-search="{{tg_mkt}}">{{tg_mkt}}</a></li>
+          {% end %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row generate">
+  <input type="submit" class="btn btn-secondary genre_performance_submit" value="Generate Report">
+</div>
+<script type="text/javascript">  
+  var form_valid = true;
+  $('.genre_performance_submit').click(function(){
+    var gp_year = new Date($('.gp_week').val()).getFullYear();
+    var gp_week = new Date($('.gp_week').val()).getWeek(gp_year);
+
+    // week_keys and star_bo_ip comes from index.html page
+    var week_selected = week_keys[gp_week + '-' + gp_year]
+    var genre_selected = $('[data-filter=gp_genre_selection]').parents('li.active').find('a').attr('data-value');
+    var tg_mkt_selected = $('[data-filter=gp_tg_selection]').parents('li.active').find('a').attr('data-value');
+
+    if(form_valid){
+      var url = 'http://' + star_bo_ip + ':8080/BOE/OpenDocument/opendoc/openDocument.jsp?iDocID=AfvJEI04Vo5CszzN9hCp3aY&sIDType=CUID&sType=wid&sRefresh=Y&lsMTG_MKT_KEY='+ tg_mkt_selected+'&lsMGENRE_KEY='+genre_selected+'&lsMDATE_KEY='+week_selected;
+      var win = window.open(url, '_blank');
+      console.log(url)
+    }
+  })
+</script>

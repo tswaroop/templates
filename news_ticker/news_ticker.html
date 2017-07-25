@@ -1,0 +1,88 @@
+{% code %}
+
+import requests
+from urllib import quote
+from datetime import datetime, timedelta
+import dateutil.parser as parser
+
+EXCLUDED_SOURCE_LIST = [
+  'moneycontrol.com',
+  'indiainfoline'
+]
+
+MINUS_SIX_MONTHS_FILTER = str((datetime.now() - timedelta(weeks=25)).isoformat())
+
+DATA_SERVER_ADDR = 'http://172.29.153.83:9876/api/newsticker'
+
+SEARCH_TERM = quote(args.get('search_term', ['Star'])[0].lower().replace("'","").replace('"',''))
+
+for searchterm,to_be_searched in pd.read_excel('searchterm_mapper.xlsx').values:
+    if searchterm == SEARCH_TERM:
+        SEARCH_TERM = to_be_searched
+        break
+
+SEARCH_TERM_FILTER = '{"name":"SearchTerm","op":"eq","val":"' + SEARCH_TERM + '"}'
+DATE_FILTER = '{"name":"PublishDate","op":"gt","val":"' + MINUS_SIX_MONTHS_FILTER + '"}'
+
+FILTER_LOGIC = '?q={"filters":[{"and":[' + SEARCH_TERM_FILTER + ',' + DATE_FILTER + ']}]}'
+
+url = DATA_SERVER_ADDR + FILTER_LOGIC
+
+data = requests.get(url).json()
+
+if len(data['objects']) == 0:
+    newstick = ['No Data Available']
+else:
+    anchor_tag = '<a target = "blank" class="tab" href="{}">{}</a>'
+    newstick = [anchor_tag.format(x['Link'].encode('utf-8'),x['Title'].encode('utf-8')) for x in data['objects'] if x['Source'].lower() not in EXCLUDED_SOURCE_LIST]
+
+{% end %}
+<style >
+  .grey
+  {
+    background-color:#636363;
+     color: #fff;
+  }
+  a.tab{
+    color: #fff;
+    padding-left: 2px;
+    padding-right: 40px;
+    text-decoration: none; /* Or desired space*/
+  }
+  .apply-on-top{
+    z-index: 9999;
+    background: #000;
+  }
+  .marquee {
+     position:relative;
+     width:50%;
+     height:15px;
+     }
+.marquee span {white-space:nowrap;}
+</style>
+<script src="{{ static_url('../../static/js/scroller.js') }}"></script>
+<div class="footer navbar-fixed-bottom"  style= "background-color: #000" >
+<div width="100%" style="margin-right:0px;margin-left: 0px;">
+<div class='row' width="100%"> <!--row-3-->
+  <div class="col-md-1 apply-on-top">
+    <svg height="40" width="150">
+      <polygon points="0,5 0,40 80,40 95,22.5 80,5" style="stroke:#f00;fill:red;stroke-width:0" />
+     <text x="6" y="26" fill="#fff">Client News</text>
+    </svg>
+  </div>
+  <div style="margin-top:6px;margin-left: -5px;" class="col-md-10">
+    <div id="m1" class="marquee"><span>{{"<svg height='20' width='20'><circle cx='10' cy='15' r='5' stroke='black' stroke-width='1' fill='red' /></svg>".join(newstick)}}</span></div>
+   </div><!-- .row -->
+  <div class="col-md-1 apply-on-top">
+     <span class="apply-on-top" style="color:#fff;">Powered by </span><a href="https://gramener.com/" target="_blank">Gramener</a>
+  </div>
+</div>
+</div>
+</div>
+<script type="text/javascript">
+  function start() {
+     new mq('m1');
+    mqRotate(mqr);
+  }
+window.onload = start();
+</script>

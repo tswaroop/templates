@@ -1,0 +1,136 @@
+{% code %}
+from templates.common.common import st_unt
+_ = globals().get
+comma = _('comma', False)
+
+cat_level = {'GENRE_DISPLAY_NAME': ['Genre', 'Network'],
+    'CHANNEL_GROUP_DISPLAY_NAME': ['Channel', 'Genre'],
+    'PROGRAM_GROUP_DISPLAY_NAME': ['Show', 'Channel'] }
+
+import what_works as ww
+cat_list = ww.cat_level[cat_display]
+st_unt = st_unt
+clnt_mtrc = 'Client'+' '+met_dict[metric]
+prog_metric = 'Total'+' '+met_dict[metric]
+format_col = ww.format_col
+slug = ww.slug
+
+data_disp = data_club.drop(['genre','ntwk'], axis=1)
+table_cat_lvl = 32.
+table_col = 100 - table_cat_lvl
+table_width = table_col / 6.
+table_c_h_w = table_cat_lvl / 2.
+
+def get_data_search(data_disp, inx, data_cols):
+  srch_str = data_disp.ix[inx,data_cols[0]] + ' ' + data_disp.ix[inx,data_cols[1]] + ' ' + data_club.ix[inx, 'genre'] + ' ' + data_club.ix[inx, 'ntwk']
+  return srch_str
+
+def get_reftgmkt(res_ref_tg):
+  disp_txt = "<span style='text-align:left'>TG-Market: {:s}</span>"
+  tgmkt = res_ref_tg['barc'] if e_wk_ky > 201512 else res_ref_tg['tam']
+  disp_txt = disp_txt.format(tgmkt)
+  return disp_txt
+
+{% end %}
+<!-- <link rel="stylesheet" type="text/css" href="{{static_url('/static/tablesorter/theme.default.css')}}"> -->
+<style>
+th.{{slug(metric)}} {
+  width: 10%;
+}
+th.Affinity{
+  width: 12.5%;
+}
+</style>
+<table class="table_cal table table-responsive tablesorter highlight-target" style="margin:0px; height=35px">
+  <thead class="t_head head1">
+      <tr>
+        <th colspan="2" style="border:0px; border-top-left-radius: 0em; border-bottom: 1px solid #4D4D4D; width: 32%;"></th>
+        <th colspan="3" style="width: 32%;">{{cat_list[0].title()}} Metrics</th>
+        <th colspan="3" style="border-top-right-radius: 0em; border-right:0px; width: 36%">Client Metrics</th>
+      </tr>
+  </thead>
+</table>
+<div id="fixed_head" class="table_cal" style="max-height:440px; overflow-y:auto; position:relative">
+  <table class="table table-responsive tablesorter highlight-target" id="what_works_table">
+    <thead class="t_head head2">
+    {% set col_disp = {'Client Genre Share': 'Genre Share',
+    metric: prog_metric, clnt_mtrc: met_dict[metric]} %}
+    <tr>
+    {% for header in data_disp.columns[:2] %}
+    {% set header = col_disp[header] if header in col_disp else header %}
+      <th width="{{table_c_h_w}}%" style="text-align:left" class="{{slug(header)}}">{{ escape(header) }}</th>
+    {% end %}
+    {% for header in data_disp.columns[2:] %}
+    {% set header = col_disp[header] if header in col_disp else header %}
+    {% set desc = '*' if header == 'Affinity' else '' %}
+      <th width="{{table_width}}%" style="text-align:left" class="{{slug(header)}}">{{ escape(header) + ' ' + desc }}</th>
+    {% end %}
+    </tr>
+   </thead>
+   <tbody class="table_metric highlight-controls">
+    {% set data_cols = data_disp.columns %}
+    {% for inx in data_disp.index %}
+    {% set ref_tg_cat = data_disp.ix[inx,data_cols[0]] if cat_display != 'PROGRAM_GROUP_DISPLAY_NAME' else data_disp.ix[inx,data_cols[1]] %}
+    {% set data_key = slug(data_disp.ix[inx,data_cols[0]]) + '-' + slug(data_disp.ix[inx,data_cols[1]]) %}
+     <tr data-search="{{get_data_search(data_disp, inx, data_cols)}}" class="{{data_key}}" style="cursor: default">
+      {% for i, col in enumerate(data_cols) %}
+        {% code %}
+          disp_ref_tg_mkt = ''
+          txtalign = "style='text-align:left'"
+          if col in ['Affinity', clnt_mtrc, prog_metric]:
+            txtalign = "style='text-align:left'"
+        {% end %}
+        {% set is_per = False %}
+        {% if col in ['Genre Share', 'Client Genre Share', 'Overall Share'] %}
+          {% set is_per = True %}
+          {% set val, hi_val = format_col(data_disp.ix[inx,col], is_per, col), data_disp[col].max() %}
+          <td {{txtalign}} data-target=".highlight-target circle" data-highlight=".{{data_key}}" data-toggle="0">
+            <span>
+            {{ SVG('cell-bar.svg', width=52, height=18, x=0, y=12, data=val[0], text=val[1]+"%", hi=hi_val, lo=0,  attrs={'fill':'#936f00', 'stroke-width':0}, textattrs={'fill':'#fff', 'title': val[0]}) }}</td>
+<!--           <td><div style="background-color:#fff;align:right;width:{#{10}#}px;height:10px;border:1px solid white;"></div></td> -->
+        {% else %}
+          {% code %}
+            ref_tg_dict = ww.get_ref_gnrtgmkt() if cat_display == 'GENRE_DISPLAY_NAME' else ww.get_ref_chnltgmkt()
+            if col == "Affinity":
+              is_per = True
+            if i==0:
+              if ref_tg_cat in ref_tg_dict:
+                res_ref_tg = ref_tg_dict[ref_tg_cat]
+                disp_ref_tg_mkt = get_reftgmkt(res_ref_tg)
+            val = format_col(data_disp.ix[inx, col], is_per, col)
+            if col == 'Network':
+              val[1] = val[1].split('Network')[0].strip()
+            if len(val[1])>=11:
+              val[1] = str(val[1])[:10] + '..'
+          {% end %}
+          <td data-sort-value="{{val[0]}}" {{txtalign}} data-target=".highlight-target circle" data-highlight=".{{data_key}}" data-toggle="0"><span title="{{val[0]}}<br>{{disp_ref_tg_mkt}}">{{ val[1] }}</span></td>
+        {% end %}
+      {% end %}
+     </tr>
+    {% end %}
+   </tbody>
+  </table>
+</div>
+<p style="font-size: .9em; margin: 0px;">{{"* Affinity is calculated as ratio of {:s} delivered on selected TG-MKT upon {:s} delivered on designated base TG-MKT for {:}".format(met_dict[metric], met_dict[metric], cat_list[0])}}</p>
+<script type="text/javascript" src="{{static_url('/static/tablesorter/jquery.tablesorter.js')}}"></script>
+<script type="text/javascript" src="{{static_url('/static/tablesorter/widget-stickyHeaders.js')}}"></script>
+<script type="text/javascript">
+
+  $('#what_works_table').tablesorter({
+      textExtraction: function(node) {
+        var attr = $(node).attr('data-sort-value');
+        if (typeof attr !== 'undefined' && attr !== false) {
+            return attr;
+        }
+        return $(node).text();
+    },
+    sortList: [[5,1]],
+    widgets: [ 'stickyHeaders' ],
+    widgetOptions: {
+      // jQuery selector or object to attach sticky header to
+      stickyHeaders_attachTo : '#fixed_head', // or $('.wrapper'),
+      stickyHeaders_zIndex : 0
+    }
+  })
+
+</script>

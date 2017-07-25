@@ -1,0 +1,633 @@
+{{ GRAMEX(cache=['../client_on_tv/snippets_cotv.html', '../../static/css/style.css', 'logo.png', 'bubblechart.html', 'scatterplot.svg', 'table.html', '../common/common.py', 'cell-bar.svg', '../../navigate.html']) }}
+{% set png_flag = args.get('png', [0])[0] %}
+{{ (GRAMEX(users =lambda v: True)) if png_flag == 0 else '' }}
+{% code %}
+import what_works as ww
+import sys
+import json
+import math
+import datetime
+from templates.common import common
+from json import dumps, loads
+from tornado.web import HTTPError
+from templates.common import session_maintain as sm
+sm.avoid_session_hijacking(handler, args)
+
+#engine = common.get_engine()
+
+# function responsible for validating user's access rights return true on successful verification
+if png_flag == 0:
+  common.get_user_access(handler.get_current_user(), 'what_works')
+
+#function responsible for checking the data refresh status, returns true on successful verification
+# common.get_refresh_status('what_works')
+
+
+tg_mkts_dict = common.get_tg_mkt()
+barc_tg_mkt = common.get_barc_mkt()
+tg_names = tg_mkts_dict.keys()
+b_names = barc_tg_mkt.keys()
+# b_names = [('b_'+e) for e in tg_names]
+ww.db_load_first() # load for first time
+max_date = ww.get_date_list()
+met_dict = ww.met_dict
+tot_clients = ww.get_clients()
+
+cat_dict = {'Genre': 'GENRE_DISPLAY_NAME',
+            'Channel': 'CHANNEL_GROUP_DISPLAY_NAME',
+            'Show':'PROGRAM_GROUP_DISPLAY_NAME'}
+hide_inputs = {
+                'chart_tgl': args.get('chart_tgl', ['Show'])[0],
+                'cat_display': args.get('cat_display', ['Genre'])[0]
+              }
+
+client = args.get('Client', [''])[0]
+tg_mrkt = args.get('TG_Market', ['CS 4+ All India'])
+b_tg_mkt = args.get('BG_Market', ['CS 4+ All India (U)'])
+
+def getDtWek(dts):
+  dt_lis = [datetime.datetime.strptime(dt, '%m/%d/%Y') for dt in dts]
+  res, dt_disp_lis = [], []
+  for e in dt_lis:
+    iso_cal = e.isocalendar()
+    onejan = datetime.datetime(e.year, 1, 1)
+    onejan_day = onejan.isoweekday()
+    # print ((e - onejan).days) , onejan_day
+    week = ((((e - onejan).days) + onejan_day + 1) / 7)
+    # week = (((e - datetime.datetime(e.year,1,1)).days - 2) / 7) + 1
+    yr = str(iso_cal[0])
+    #week = str(iso_cal[1]).zfill(2)
+    week = str(week).zfill(2)
+    dt_disp = yr + ' Week '+ week
+    dt_int = int(yr + week)
+    dt_disp_lis.append(dt_disp)
+    res.append(dt_int)
+  return res, dt_disp_lis
+
+try:
+  max_date = datetime.datetime.strptime(str(int(max_date)-1)+"6", '%Y%U%w')
+  max_dt = max_date.strftime("%m/%d/%Y")
+  date_sel = args.get('Date', [max_dt, max_dt])
+  dt_week, dt_disp_lis = getDtWek(date_sel)
+  dt_disp = ' To '.join(dt_disp_lis)
+except:
+  raise HTTPError(400)
+
+# src_tam_tg = "TAM"+" "+tg_mrkt[0]
+# src_b_tg = "BARC"+" "+b_tg_mkt[0]
+
+
+client_key = tot_clients.get(client, -1)    # 207842 (HUL)
+print client, client_key, "**********"
+
+metric = args.get('toggle', ['ADGRP'])[0]     # for handling dashboard navigation
+if metric == 'AD_GRP':
+  metric = 'ADGRP'
+
+cat_name = args.get('cat_display', ['Genre'])[0]
+cat_disply = cat_dict[cat_name]
+hide_tgl = hide_inputs['chart_tgl']
+
+arg_dict = {
+            tg_mrkt[0]: [tg_mkts_dict, ''],
+            b_tg_mkt[0]: [barc_tg_mkt, ''],
+            cat_name: [['Genre', 'Channel', 'Show'], 'Genre'],
+            hide_tgl: [['Show','Hide'], 'Show'],
+            metric: [['ADGRP', 'FCT', 'TVT'], 'ADGRP']
+            }
+
+isValidArgs = common.argsValidation(arg_dict)
+if not isValidArgs:
+  raise HTTPError(400)
+
+tam_tg_key = tg_mkts_dict[tg_mrkt[0]]['TG_KEY']
+tam_mkt_key = tg_mkts_dict[tg_mrkt[0]]['MARKET_KEY']
+barc_tg_key = barc_tg_mkt[b_tg_mkt[0]]['TG_KEY']
+barc_mkt_key = barc_tg_mkt[b_tg_mkt[0]]['MARKET_KEY']
+
+sel_list = ['Client', 'TG-Market', 'BARC TG-Market', 'Time-Period', 'Metric']
+sel_dict = {'Client': client,
+            'TG-Market': tg_mrkt,
+            'Time-Period': dt_disp,
+            'Metric': met_dict[metric],
+            'BARC TG-Market': b_tg_mkt}
+
+filters_values = [
+    ['TAM TG Market', 'TG_Market', tg_mrkt[0]],
+    ['BARC TG Market', 'BG_Market', b_tg_mkt[0]]
+  ]
+tgl_sel = [metric, {'AD GRP': 'ADGRP', 'FCT':'FCT', 'TVT':'TVT'}]
+
+# tg_name = tg_mkts_dict.get(tg_mrkt[0])['TG_DISPLAY_NAME']
+# mkt_name = tg_mkts_dict.get(tg_mrkt[0])['MARKET_DISPLAY_NAME']
+
+s_wk_ky, e_wk_ky = dt_week[0], dt_week[1]
+print s_wk_ky, e_wk_ky, "**********"
+title = 'What Works Best For'
+insights, data_csv, downld_csv = [], [], pd.DataFrame()
+#data = pd.read_csv('gnr_ntwk.csv')
+T('../client_on_tv/snippets_cotv.html', DB=DB, static_url=static_url, tgl_sel=tgl_sel, dates=date_sel, datePkrType='week-picker', search=True, downld_temp='download.html')
+# print len(data)
+x_lo, x_hi = (0, 100)
+y_lo, y_hi = (0, 100)
+x_lo_def, x_hi_def = (0, 100)
+y_lo_def, y_hi_def = (0, 100)
+show_dashboard = ('Client' in args) and (client != '')
+{% end %}
+<!DOCTYPE html><html lang="en">
+<head>
+  {{ Block.run('header', title=title) }}
+  {{ T('../common/usage_tracker.html', handler = handler) }}
+</head>
+<style >
+.scroll { height: auto; max-height: 500px; overflow-x: hidden; }
+
+.tooltip > .tooltip-inner {
+    background-color: #FFFFFF;
+    color: #000;
+    }
+.chart_tgl{
+  padding: 6px;
+}
+
+.t_head th{
+  background-color: #4D4D4D;
+  border-top: 0px !important;
+  vertical-align: middle !important;
+}
+.t_head.head1 th{
+  text-align: center;
+  border-bottom: 1px solid #FFFFFF;
+  border-right: 4px solid #4D4D4D;
+  font-size: 1.1em;
+  font-weight: bold;
+
+}
+.charts {
+  margin-top: 0em;
+  padding-top: 1em;
+}
+.glyphicon {
+  color: #fff;
+}
+.chart {
+  margin-top: 0%;
+  padding: 0em .2em .6em .2em;
+}
+.table_metric {
+  background-color: #222;
+}
+/*
+g.bars>rect { mask: url(#mask-stripe) }
+*/
+.table tbody tr td {
+  padding: 0.1em .5em 0.1em 0.5em;
+  border-top: 0px;
+}
+.table#what_works_table tr:nth-of-type(3n) td {
+    /*border-bottom: 1px solid #4D4D4D;*/
+}
+
+.datepicker tr:hover{
+  background: #eee;
+  cursor: pointer;
+}
+
+.table .text-right {text-align: right}
+.table .text-left {text-align: left}
+.table .text-center {text-align: center}
+
+#bub_chrt_cnvs {
+  font-size: .8em;
+}
+html * {
+  font-family: Calibri, Arial, sans-serif;
+}
+.btn.tgl_btns.cht_btn {
+  padding: 3px 8px 3px 8px;
+}
+.bubble_chart .qdrnt_lbls{
+  opacity: .5;
+  font-size: 1.1em;
+}
+.highlight-target .fade {
+  opacity: .1;
+}
+body{
+  padding-top: 70px;
+}
+.container{
+  width: 1170px;
+}
+.navbar-header .navbar-brand{
+  padding-right: 0px;
+}
+
+</style>
+<body style="background-color: #000">
+
+{{ Block.run('navbar', title=title, logo='logo.png',  multifilters=filters_values,
+  args=args, handler=handler, download=True, hide_inputs=hide_inputs, client_first=False, png="What_Works_Best_For_"+client) }}
+<div style= "background-color: #000; margin-bottom: 30px" class="container">
+ <div class="row">
+    <div class="col-sm-4 col-md-2">
+      <div style='margin-top: 5px; display: inline;' class="btn-group btn-group-sm,navbar-toggle" role="group">
+      {% for cat in ['Genre', 'Channel', 'Show'] %}
+      <button type="button" class="load tgl_btns btn cht_btn btn-default genre_btn {{'active' if cat == cat_name else ''}}" data-href="?cat_display={{cat}}">{{cat}}</button>
+      {% end %}
+      </div>
+    </div>
+    {% for e in ['X', 'Y'] %}
+    <div class="slider-div col-md-3">
+      <input data-slider-handle="square" id="{{e}}scale_slider" type="text" class="span1" value=""/>
+      <div class="slider-label">{{e}} axis scale</div>
+    </div>
+    {% end %}
+    <div class="col-md-2">
+    {% for btn in ['Scale', 'Reset'] %}
+      <button id="axis_{{btn}}" data-href="?" type="button" class="tgl_btns btn cht_btn btn-default load">{{btn}}</button>
+    {% end %}
+    </div>
+    <div style="float:right;color:#fff">
+      <span class="glyphicon glyphicon-th-large" aria-hidden="true"></span>
+      <span>Chart:</span>>
+      <div class="btn-group tgl_ref" role="group">
+      {% for chart_tgl in ['Show', 'Hide'] %}
+      <button id="{{chart_tgl}}" type="button" class="tgl_btns btn cht_btn chart_tgl btn-default genre_btn {{'active' if chart_tgl == hide_tgl else ''}}" data-ref="?chart_tgl={{chart_tgl}}">{{chart_tgl}}</button>
+      {% end %}
+      </div>
+    </div>
+ </div>
+
+ <div class="row charts hide">
+  <!-- Row 2: Two columns of equal width ================================ -->
+    <!-- First chart .................................................... -->
+    {% if show_dashboard %}
+    {% code %}
+    handler.timer("inital time")
+    key_vals = (client_key, metric, tam_tg_key, tam_mkt_key, barc_tg_key, barc_mkt_key, cat_disply, s_wk_ky, e_wk_ky)
+
+    ww_key = '_'.join(['{:}'.format(e) for e in key_vals])
+    temp_key = 'what_works_temp_data'
+
+    # use DB to fetch data from selected selection
+    if temp_key not in DB:
+        DB[temp_key] = {}
+    if ww_key not in DB[temp_key]:
+        data, insights = ww.get_sql_data(
+            client_key, metric, tam_tg_key,
+            tam_mkt_key, barc_tg_key,
+            barc_mkt_key, cat_disply, s_wk_ky, e_wk_ky)
+        DB[temp_key][ww_key] = (data, insights)
+
+    data, insights = DB[temp_key][ww_key]
+    handler.timer('test1')
+
+    data = ww.get_col_rename(data, cat_disply, metric)
+    data_csv = data
+    # print len(data_csv)
+    if cat_disply == 'PROGRAM_GROUP_DISPLAY_NAME':
+      data = data.head(100)
+    # data_csv.to_csv('test_dnld.csv')
+    downld_csv = data_csv.drop(['genre','ntwk'], axis=1)
+    clnt_mtrc = 'Client' + ' ' + met_dict[metric]
+    handler.timer('test2')
+    prog_metric = 'Total' + ' ' + met_dict[metric]
+    {% end %}
+    {% if not data.empty %}
+    {% set data_club, ntwks = ww.club_othrs(data, cat_disply, metric) %}
+    {% set data_club = data_club[~(data_club[clnt_mtrc]).isnull()] %}
+
+    {% code %}
+    data_club[prog_metric] = data_club[prog_metric].astype('float')
+    data_club['Affinity'] = data_club['Affinity'].astype('float')
+
+    y_hi_def, y_lo_def = (
+      data_club[prog_metric].max(),
+      data_club[prog_metric].min())
+
+    x_hi_def, x_lo_def = (
+      data_club.replace(numpy.inf, numpy.nan)['Affinity'].max(),
+      data_club['Affinity'].min())
+
+    x_lo, x_hi = (
+      '{:.0f}'.format(float(args.get('x_lo', [x_lo_def])[0])),
+      '{:.0f}'.format(math.ceil(float(args.get('x_hi', [x_hi_def])[0]))))
+
+    y_lo, y_hi = (
+      '{:.0f}'.format(float(args.get('y_lo', [y_lo_def])[0])),
+      '{:}'.format(math.ceil(float(args.get('y_hi', [y_hi_def])[0]))))
+
+    data_bub = data_club[(data_club['Affinity'] >= float(x_lo)) & (
+      data_club['Affinity'] <= float(x_hi)) & (
+      data_club[prog_metric] >= float(y_lo)) & (
+      data_club[prog_metric] <= float(y_hi))]
+    max_y_val = data_club[prog_metric].max()
+    min_y_val = data_club[prog_metric].fillna(0).min()
+
+    {% end %}
+    <div class="col-md-6 chart" id="bubble_div">
+      {% if len(data_bub)>0 %}
+        <section class="contents">
+          {{ T('bubblechart.html', data_bub=data_bub, metric=metric, met_dict=met_dict, ntwks=ntwks, cat_display=cat_disply, max_y_val=max_y_val, min_y_val=min_y_val) }}
+          {% set handler.timer('test3') %}
+        </section>
+      {% else %}
+        <div class="alert" role="alert">
+          <pre>No Data For Current Selection</pre>
+        </div>
+      {% end %}
+    </div><!-- .col-sm-6.chart -->
+
+    <!-- Second chart .................................................... -->
+    <div class="col-md-6 chart" id="client_table_div">
+      <section class="contents" style="color:#fff">
+      {{ T('table.html', cat_display=cat_disply, metric=metric, static_url=static_url, met_dict=met_dict, client=client, dt_disp=dt_disp, data_club=data_club, e_wk_ky=e_wk_ky) }}
+      {% set handler.timer('test4') %}
+      </section>
+    </div><!-- .col-sm-6.chart -->
+    {% else %}
+      <div class="alert" role="alert">
+        <pre>No Data For Current Selection</pre>
+      </div>
+    {% end %}
+    {% else %}
+     <div class="alert" role="alert">
+        <pre>Please select the client from the top left drop down</pre>
+      </div>
+    {% end %}
+  </div><!-- .row -->
+
+  <div style="margin-top:5px" class="col-md-12 news_ticker">
+  </div><!-- .row -->
+</div>
+
+<div class="insights" style="{{'display:none' if args.get('png', [0])[0]=='1' else ''}}">
+  <div class="title"><p class="rotate-bt">Insights</p></div>
+  <div class="panelBox" style="padding-top: 1em">
+    <!--<h3 style="background: #cfcfcf; color: #000">Insights</h3>-->
+    {% for ins in insights %}
+    <div class="insight_container">
+      {% for stmt in ins %}
+        {% if isinstance(stmt, str) %}
+        <p class="insights_header" style="margin-top: 5px !important;">{{stmt}}</p>
+        {% else %}
+          <ul>
+          {% for inx in stmt.index %}
+            <li>{{inx[0]}}({{'spend:{:.2f}%, Affinity: {:.2f}%'.format(stmt.ix[inx,'Overall Share'], stmt.ix[inx,'Affinity'])}})</li>
+          {% end %}
+          </ul>
+        {% end %}
+      {% end %}
+      </div>
+    {% end %}
+    <div class="insight_container" style="border:0px">
+    <div class="insights_header">{{"""NOTE: Based on {:s}""".format(met_dict[metric])}}
+    </div></div>
+  </div>
+</div>
+<div class="left_menu" style="{{'display:none' if args.get('png', [0])[0]=='1' else ''}}">
+  <div class="title"><p class="rotate-bt" style="margin-top: 40px;">Menu</p></div>
+  <div class="panelBox" style="padding-top: 1em">
+    {% if png_flag == 0 %}
+    {{T('../../navigate_new.html', roles=None, Client=client, toggle=metric, TG_Market=tg_mrkt[0], BARC_TG_Market=b_tg_mkt[0], current_user=handler.get_current_user())}}
+    {% end %}
+  </div>
+</div>
+{{ T('..\common\selection_alert.html', date_alert="Please select maximum 52 weeks") }}
+</div><!--.container -->
+{% set handler.timer('test5') %}
+{% code %}
+  format_col = ww.format_col
+  if not downld_csv.empty:
+    # downld_csv = downld_csv.apply(lambda v: [format_col(e, False, '')[0] for e in v])
+    handler.timer('test5.1')
+    '''
+    downld_csv.loc[:,'TG-Market'] = tg_mrkt
+    downld_csv.loc[:,'Client'] = client
+    downld_csv.loc[:,'TimePeriod'] = dt_disp
+    '''
+  sel_list_csv = []
+  for key in sel_list:
+    sel_list_csv.append([key, sel_dict[key]])
+  csv_data = sel_list_csv + [''] + [list(downld_csv.columns)] + loads(downld_csv.to_json(orient='values', double_precision=2))
+{% end %}
+{% set handler.timer('test6') %}
+{{ Block.run('footer', handler=handler, share='Check out this visualisation', multifilters=filters_values) }}
+<script type="text/javascript">
+$('.tgl_ref')
+  .urlfilter({
+    selector: '.chart_tgl',
+    attr: 'data-ref',
+    target: 'pushState'
+}).on('loaded.g.urlfilter', reload_togl)
+
+function reload_togl(){
+  var params = G.url.parse(location.href).searchKey
+  var png_href = G.url.parse($("li.png_ a").attr('href'))
+  var png_url = G.url.parse(png_href.searchKey['url'])
+  if (!params['chart_tgl']){
+    params['chart_tgl']='Show'
+  }
+  $('.charts').removeClass('hide');
+  var chrt_tgl = params['chart_tgl']
+  png_url = png_url.update({'chart_tgl': chrt_tgl}).toString()
+  png_href = png_href.update({'url': png_url}).toString()
+  $("li.png_ a").attr('href', png_href)
+    if (chrt_tgl=='Hide'){
+      $('#bubble_div').hide();
+      $('#client_table_div').removeClass('col-md-6')
+      $('.table_cal').css('font-size','1em')
+    }
+    if (chrt_tgl=='Show'){
+      $('#client_table_div').addClass('col-md-6');
+      $('#bubble_div').show();
+      $('#bub_chrt_cnvs').removeAttr('style');
+      $('.table_cal').css('font-size','.86em')
+    }
+}
+
+$(".chart_tgl").click(function(){
+    $('.chart_tgl').removeClass('active')
+    $(this).addClass('active')
+    $('input[name=chart_tgl]').attr('value', $(this).attr('id'))
+});
+
+reload_togl();
+
+$('.bubble_chart circle').each(function() {
+    var title = $('title', this);
+    $(this).attr('title', title.text());
+    title.remove();
+})
+var lastsearch= ' '
+$('body').on('keypress, change, keyup', '.search_word', function(){
+  var search = $(this).val();
+  if(lastsearch != search){
+    lastsearch = search;
+    var re = new RegExp(search, "i");
+
+    $('.bubble_chart circle, .table_metric tr').each(function(d){
+        var client_name = $(this).attr('data-search');
+        re.test(client_name) ? $(this).removeClass('hide') : $(this).addClass('hide');
+        })
+  }
+})
+$("#Client").autocomplete({
+  source: {{tot_clients.keys()}},
+  change: function (event, ui) {
+      $(this).val((ui.item ? ui.item.value : ""));
+      if(!ui.item){
+        $('#myDropdown').modal('show');
+      }
+  }
+});
+$( "#Client" ).autocomplete( "widget" ).addClass('Client');
+
+$("#TG_Market").autocomplete({
+  source: {{dumps(tg_names)}},
+  change: function (event, ui) {
+      $(this).val((ui.item ? ui.item.value : ""));
+      if(!ui.item){
+        $('#myDropdown').modal('show');
+      }
+  }
+});
+$( "#TG_Market" ).autocomplete( "widget" ).addClass('TG_Market');
+
+$("#BG_Market").autocomplete({
+  source: {{dumps(b_names)}},
+  change: function (event, ui) {
+      $(this).val((ui.item ? ui.item.value : ""));
+      if(!ui.item){
+        $('#myDropdown').modal('show');
+      }
+  }
+});
+$( "#BG_Market" ).autocomplete( "widget" ).addClass('BG_Market');
+
+$('a.downloadCsv').on('click', function(e){
+  var csv_data = {{dumps(csv_data)}}
+  e.preventDefault();
+  G.download({
+    file: 'What_Works_Best_For_' + {{ json.dumps(client.title()) }} +'.csv',  // Save the file as ...
+    csv:  csv_data// Data to download
+    // You can specify the data as an array of arrays,
+    // or as an array of dictionaries. For example:
+    // csv: [{A:1, B:2, C:3}, {A:3, B:4, C:5}]
+  })
+});
+$('.highlight-controls').highlight();
+
+var intervals = {
+  s : 1000,
+  m : 60000,
+  h : 3600000,
+  d : 86400000,
+  w : 604800000
+}
+
+function dateDiff(interval,date1,date2) {
+  if( "smhdw".indexOf(interval) == -1 ) {
+    return "error";
+  }
+  if( !date1 )
+    return "error";
+
+  if( !date2 )
+    return "error";
+
+  var diff = (date2 - date1) / intervals[interval];
+  return diff;
+}
+
+$('.filter-buttons .btn-submit').on('click', function(event){
+  date1= new Date($('.fst').val())
+  date2= new Date($('.sec').val())
+  weekDiff = Math.floor(dateDiff('w',date1,date2)) + 1;
+  if (weekDiff>52) {
+    $('#myModal').modal('show');
+    $(".loading").hide();
+    event.preventDefault();
+  }
+});
+Date.prototype.getWeek = function() {
+      var onejan = new Date(this.getFullYear(), 0, 1);
+      var jan_day = onejan.getDay();
+      if (jan_day == 0){jan_day = 7;}
+      // console.log(Math.floor((((this - onejan) / 86400000) + jan_day + 1) / 7));
+      return Math.floor((((this - onejan) / 86400000) + jan_day + 1) / 7);
+}
+function display_yr_wk(){
+  frm_date = new Date($('.fst').val());
+  frm_year = frm_date.getFullYear();
+  frm_wek_no = frm_date.getWeek(frm_year);
+  frm_dt = frm_year + '-' + frm_wek_no;
+  to_date = new Date($('.sec').val());
+  to_year = to_date.getFullYear();
+  to_wek_no = to_date.getWeek(to_year);
+  frm_dt = frm_year + '-' + frm_wek_no;
+  to_dt = to_year + '-' + to_wek_no
+  date_text = frm_dt + ' To ' +to_dt
+  $('.date_display').removeClass('hide')
+  .text(date_text);
+  $('.timeperiod').attr('title', date_text);
+  $('.timeperiod').attr('data-original-title', date_text);
+}
+$('#week-picker input').on('change', function(e){
+  display_yr_wk();
+});
+display_yr_wk();
+var x_lo_hi = [{{x_lo}}, {{x_hi}}],
+y_lo_hi = [{{y_lo}}, {{y_hi}}];
+var x_lo_hi_def = [{{json.dumps(x_lo_def)}}, {{json.dumps(math.ceil(x_hi_def))}}],
+y_lo_hi_def = [{{json.dumps(y_lo_def)}}, {{json.dumps(math.ceil(y_hi_def))}}]
+
+{% set th_dict = {'x_lo': x_lo, 'x_hi': x_hi, 'y_lo': y_lo, 'y_hi': y_hi} %}
+{% set reset_href = '&'.join(['{:}='.format(k) for k, v in th_dict.items()]) %}
+
+var th_dict = {{dumps(th_dict)}};
+var scale_href = $.param(th_dict);
+
+$('#axis_Scale').attr('data-href', "?" + scale_href);
+$('#axis_Reset').attr('data-href', "?{{reset_href}}");
+
+function change_ref(e){
+  var scale = this.id;
+  var values = e.value;
+  if(scale == 'Xscale_slider'){
+    th_dict['x_lo'] = values[0];
+    th_dict['x_hi'] = values[1];
+  }
+  if(scale == 'Yscale_slider'){
+    th_dict['y_lo'] = values[0];
+    th_dict['y_hi'] = values[1];
+  }
+  scale_href = $.param(th_dict);
+  $('#axis_Scale').attr('data-href', "?" + scale_href);
+  var slider = $(this).closest('.slider')
+  slider.find('.tooltip-inner').text(values[0] + " : " + values[1])
+}
+
+if(x_lo_hi[1] == 0){
+  x_lo_hi[1] = 0.01;
+}
+if(y_lo_hi[1] == 0){
+  y_lo_hi[1] = 0.01;
+}
+
+var x_slider = $("#Xscale_slider").slider(
+  { min: 0, max: x_lo_hi_def[1], value: x_lo_hi, focus: true }).on(
+  'slide', change_ref).data('slider');
+var y_slider = $("#Yscale_slider").slider(
+  { min: 0, max: (y_lo_hi_def[1]), value: y_lo_hi, focus: true }).on(
+  'slide', change_ref).data('slider');
+
+</script>
+{% if show_dashboard %}
+<script type="text/javascript">
+  $('.news_ticker').load('../news_ticker/news_ticker.html?search_term=' + encodeURIComponent("{{client}}"))
+</script>
+{% end %}
+</body>
+</html>

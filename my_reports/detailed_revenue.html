@@ -1,0 +1,200 @@
+{% code %}
+import json
+prg_dates_key  = json.dumps(pd.Series(dim_date.DATE_KEY.values, index=dim_date.PRG_DATE).to_dict())
+#user_id = 'JAINA'
+import re
+from tornado.web import HTTPError
+from admin.auth import AuthError
+#pattern = re.compile("starin[^\w']")
+#user_id = pattern.sub('', handler.get_current_user()).upper()
+user_id = handler.get_current_user().upper().split('\\')[1]
+if user_id in ['GRAMENER_SSO_TEST1', 'GRAMENER_SSO_TEST2', 'ADMIN']:
+    user_id = 'JAINA'
+# user_id = 'MELROYM'
+user_key = emp_hierarchy[emp_hierarchy['EMPLOYEE_NT_ID'] == user_id]['EMPLOYEE_KEY'].unique()
+user_name = emp_hierarchy[emp_hierarchy['EMPLOYEE_NT_ID'] == user_id]['EMPLOYEE_NAME'].unique()[0]
+'''
+if len(user_key) == 1:
+    valid_user = True if len(emp_access[emp_access['EMPLOYEE_KEY'] == user_key.values[0]]) else False
+else:
+    valid_user = False
+if not valid_user:
+    raise HTTPError(401, '%s not allowed' % user_id)
+'''
+roles = emp_hierarchy[emp_hierarchy['EMPLOYEE_NT_ID'] == user_id]['EMPLOYEE_ROLE'].unique()
+# roles = handler.auth.roles(handler.get_current_user())
+# print roles, "testttttt"
+show_report = False
+doc_id = "AZD7AVNFbKBLooAYppEz1kg"
+emps_reporting = 'all'
+if 'HO GROUP' in roles:
+    emp_acs = emp_access[(emp_access['CHANNEL_GROUP_DISPLAY_NAME'] == 'ALL') & (emp_access['EMPLOYEE_KEY'].isin(user_key))]
+    emp_acc = emp_access[emp_access['CHANNEL_GROUP_DISPLAY_NAME'] != 'ALL']
+    if not emp_acs.empty:
+      show_report = True
+else:
+    doc_id = "AdWoeLEdWOlNvBQOdaQ58Kg"
+    if 'SALES EXECUTIVE' in roles:
+      emps_reporting = [emp_hierarchy[emp_hierarchy['EMPLOYEE_NT_ID'] == user_id]['EMPLOYEE_KEY'].values[0]]
+    else:
+      emps_reporting = DB['emp_keys'].get(user_name.replace('_', " ").upper(), [])
+      emps_reporting = list(emps_reporting) + list(user_key)
+    emp_acc = emp_access[emp_access['EMPLOYEE_KEY'].isin(emps_reporting)]
+    emp_acc = emp_acc[emp_acc['CHANNEL_GROUP_DISPLAY_NAME'] != 'ALL']
+    emps_reporting = ';'.join(emps_reporting)
+    show_report = True
+
+'''
+if 'HO GROUP' not in roles:
+    print 'IFFFFFFFFFFFFFFFFFFFFFFFFFFF'
+    channels_head = DB['emp_channels'][user_name.replace('_', " ").upper()]
+    emp_acc = emp_access[emp_access['CHANNEL_GROUP_KEY'].isin(channels_head)]
+    if 'SALES EXECUTIVE' in roles:
+      emps_reporting = [emp_hierarchy[emp_hierarchy['EMPLOYEE_NT_ID'] == user_id]['EMPLOYEE_KEY'].values[0]]
+      print 'iFFFFFFFFFFFFFFFFFFFFFF'
+    else:
+      emps_reporting = DB['emp_keys'][user_name.replace('_', " ").upper()]
+    emp_acc = emp_access[emp_access['EMPLOYEE_KEY'].isin(emps_reporting)]
+    emp_acc = emp_acc[emp_acc['CHANNEL_GROUP_DISPLAY_NAME'] != 'ALL']
+    emps_reporting = ';'.join(emps_reporting)
+else:
+    print 'HO GROUPPPPPPPPPPPPPPPPPPPPPP'
+    emp_acc = emp_access
+    emp_acc = emp_access[emp_access['CHANNEL_GROUP_DISPLAY_NAME'] != 'ALL']
+    emps_reporting = 'all'
+'''
+emp_acc['display_key'] = emp_acc['CHANNEL_GROUP_KEY']
+
+{% end %}
+<style type="text/css">
+  .datepicker-orient-right{
+    top: 50px !important;
+  }
+  .date_label{
+    color: white;
+  }
+
+</style>
+<div class="row detailed_revenue">
+  <div class="col-md-12 col-md-offset-4">
+    <div class="col-md-2 date_day">
+      <ul class="nav navbar-nav form-filters">
+        <li class="filter-col dropdown control" style="padding-left:25px;">
+          <button class="dropdown-toggle btn btn-default" data-toggle="dropdown">
+            Time Period<span class="caret"></span></button>
+          <ul class="dropdown-menu dropdown-menu-form" role="menu">
+            <li style="width: 320px;">
+              <div class="input-daterange input-group item date-picker" style="display: table;">
+                <span class="input-group-addon">From</span>
+                <input onkeydown="return false" type="text" class="input-sm form-control from_date from_dt" name="Date" value="" autocomplete="off"/>
+                <span class="input-group-addon">To</span>
+                <input onkeydown="return false" type="text" class="input-sm form-control to_date to_dt" name="Date" value="" autocomplete="off"/>
+              </div>
+            </li>
+          </ul>
+        </li>
+      </ul>
+      <p class="display_selection"></p>
+    </div>
+    <div class="col-md-2">
+      <div class="multiselect btn-group">
+        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+          Channels <span class="caret"></span>
+        </button>
+
+        <ul class="dropdown-menu overflow" role="menu">
+          <li><a><input type="text" class="search search_filter" placeholder="Search for a channel"></a></li>
+          <li><a><div class="checkbox"><label><input type="checkbox" class="channel_select_all" checked> Select All</label></div></a></li>
+          {% for channel in emp_acc['CHANNEL_GROUP_DISPLAY_NAME'].unique() %}
+            {% set channel_rows  = emp_acc[emp_acc['CHANNEL_GROUP_DISPLAY_NAME'] == channel] %}
+            {% set display_keys = channel_rows['display_key'].unique() %}
+            <li><a><div class="checkbox"><label><input class="channel_selections" type="checkbox" checked name="option" data-key="{{';'.join(display_keys)}}" value="{{display_keys}}" data-search="{{channel}}">
+              {{ channel }}
+            </label></div></a></li>
+          {% end %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row generate">
+  <input type="submit" class="btn btn-secondary detailed_revenue_submit" value="Generate Report">
+</div>
+
+
+<script type="text/javascript">
+  $('.channel_select_all').click(function(){
+    if($(this).prop('checked')){
+      $('.channel_selections').prop('checked', true)
+    }
+    else{
+      $('.channel_selections').prop('checked', false)
+    }
+  })
+
+  $('.detailed_revenue_submit').click(function(e){
+
+    // Date validation
+    var show_report = "{{show_report}}"
+    var form_valid = true;
+    if(show_report=='False'){
+      form_valid = false;
+      alert("You do not have access to view Detailed revenue report")
+      return false;
+    }
+    var to_date = Date.parse($('.to_date').val());
+    var from_date = Date.parse($('.from_date').val());
+    var days_diff = (to_date - from_date)/ 1000 / 60 / 60 / 24;
+    if (days_diff > 168){
+      form_valid = false;
+      alert('From date cannot be beyond 6 months')
+    }
+
+    var start = $(".from_date").datepicker("getDate"),
+        end = $(".to_date").datepicker("getDate"),
+        currentDate = start,
+        between = []
+    ;
+    var prg_dates_keys = {{prg_dates_key}};
+    console.log(start.getMonth())
+    while (currentDate <= end) {
+
+        var day = (currentDate.getDate()).toString()
+        var month = (currentDate.getMonth() + 1).toString()
+        month = month<10 ? '0'+month : month
+        day = day<10 ? '0'+day : day
+        console.log(day)
+        var year = currentDate.getFullYear().toString()
+        var date_formatted = year+'-'+month+ '-' + day;
+        between.push(prg_dates_keys[date_formatted]);
+        currentDate.setDate(currentDate.getDate() + 1);
+    }
+    dates_keys = between.join(';')
+    var channels_selected = $('.detailed_revenue input.channel_selections:checked');
+    var channel_keys = channels_selected.map(function() {
+      return $(this).attr('data-key');
+    }).get().join(';');
+    //var form_valid = true;
+
+    if(channels_selected.length==0){
+      form_valid = false;
+      alert('Please select atleast one channel')
+    }
+
+    if (form_valid){
+      var emps_reporting = "{{emps_reporting}}"
+      var doc_id = "{{doc_id}}"
+      var base_url = 'http://'+star_bo_ip+':8080/BOE/OpenDocument/opendoc/openDocument.jsp?iDocID='+doc_id+'&sIDType=CUID&sType=wid&sRefresh=Y&lsMDATE_KEY='+dates_keys+'&lsMCH_GRP_KEY='+channel_keys;
+      if (emps_reporting == 'all'){
+        url = base_url
+      }
+      else{
+        url = base_url + '&lsMEMP_KEY=' + emps_reporting
+      }
+      var win = window.open(url, '_blank');
+      win.focus();
+      console.log(url)
+    }
+  })
+</script>

@@ -1,0 +1,261 @@
+{# Snippets contains Blocks embedded in multiple pages in the application.
+   Every page must load snippets.html at the beginning via `T('snippets.html')`.
+
+   You may add any additional block definitions below.
+------------------------------------------------------------------------------ #}
+
+
+{% from urllib import quote %}
+
+{# header
+   ------------------------------------------------------------------------------
+   Block.run('header') must be at the start of every HTML page's <head> block
+   Modify this if you want to change the <head> section of every page
+#}
+a.button{
+ hover: #2b8cbe;
+}
+{% set hide_inputs = [] %}
+{% apply Block.name('header', persist=True) %}
+<meta charset="utf-8">
+<title style =>{{! title }}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimal-ui">
+<link rel="stylesheet" href="{{! static_url('../../static/css/jquery-ui.css') }}">
+<link rel="stylesheet" href="{{! static_url('/css/bootstrap.v3.min.css') }}">
+<script src="{{! static_url('/js/jquery2.min.js') }}"></script>
+<script src="{{! static_url('../../static/js/jquery-ui.js') }}"></script>
+<script src="{{! static_url('/js/bootstrap.v3.min.js') }}"></script>
+<script src="{{! static_url('/js/G.min.js') }}"></script>
+
+<link rel="stylesheet" href="{{! static_url('../../static/css/style.css')}}">
+<link rel="stylesheet" href="{{! static_url('../../css/datepicker.css') }}">
+<script src="{{! static_url('../../static/js/bootstrap-datepicker.js') }}"></script>
+  {# To include something here in EVERY page, add the code here directly. For example:
+       <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+     To include something here in SOME pages, use the code below.
+        {% apply Block.append('head') %}<meta name="description" content="">{% end %}
+        {% apply Block.append('head') %}<script src="script.js"></script>{% end %}
+  #}
+  {{! Block.defer('head') }}
+{% end %}
+
+
+{# navbar
+   ------------------------------------------------------------------------------
+   Displays navbar on top of each page. All params are required.
+   Block.run('navbar', args=, title=, logo=, filter=, handler=)
+
+   args:    Just pass `args=args`. Required
+   title:   Title text to display on top of the navbar. Pass None for no title
+   logo:    Path to logo image. None for no logo
+   filter:  A stats.Filter() instance to show of filters. None for no filters
+   handler: Just pass `handler=handler`. None disables auth-related features
+#}
+
+{% apply Block.name('navbar-filter') %}
+{%! set cls = 'btn-link client_title' if param == 'Client' else 'btn-default filter_'+param %}
+  <div class="btn-group filter">
+    <button type="button" class="btn {{!cls}} dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="{{! name + ':</br>' + default }}" data-placement="bottom"><span class="drop_text">{{! default[:10].replace("''","'") }}</span><span class="caret"></span></button>
+    <ul class="dropdown-menu dropdown-menu-form scroll" role="menu" style="border-radius: 5px; padding: 0px">
+      <li class="control">
+          <input type="search" style="width:200px;" id="{{! param }}" class="form-control input-xs" placeholder="Search {{! name }}" name="{{! param }}" value="{{! default }}">
+      </li>
+    </ul>
+  </div>
+{% end %}
+{# navbar-datepicker
+   ------------------------------------------------------------------------------
+   Date picker for navbar. All params are required.
+  {{ Block.run('navbar-datepicker', type='normal', dates=dates) }}
+
+   type:  If datepicker is in dropdown item or normal block display
+   dates: Date values ot be filled into the input box.
+#}
+{% apply Block.name('navbar-datepicker') %}
+  {%! if type == 'normal' %}
+  <div>
+  <!-- <li style="width: 300px;" class="navbar-form"> -->
+    {{! Block.run('bs-datepicker', dates=dates) }}
+  </div>
+  {%! end %}
+  {%! if type == 'dropdown' %}
+  <div class="filter filter-col dropdown btn-group control {%! if dates %}active{%! end %}">
+      <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+        Time Period<span class="caret"></span></a>
+      <ul class="dropdown-menu dropdown-menu-form" role="menu">
+        <li style="width: 320px;">
+          {{! Block.run('bs-datepicker', dates=dates) }}
+        </li>
+      </ul>
+    </div>
+  {%! end %}
+{% end %}
+
+
+{# bs-datepicker
+   ------------------------------------------------------------------------------
+   Bootstrap datepicker range
+#}
+{% apply Block.name('bs-datepicker', persist=True) %}
+  <div class="input-daterange input-group item" id="{{datePkrType}}" style="display: table;">
+    <span class="input-group-addon">From</span>
+    <input onkeydown="return false" type="text" class="input-sm form-control fst" name="Date" value="{{! dates[0] }}"/>
+    <span class="input-group-addon">To</span>
+    <input onkeydown="return false" type="text" class="input-sm form-control sec" name="Date" value="{{! dates[1] }}"/>
+  </div>
+{% end %}
+{% apply Block.name('navbar', persist=True) %}
+<form class="navbar navbar-static-top navbar-default navbar-inverse navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-headers">
+       <button ak type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar-collapse">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      {%! if logo %}
+        {{T('../../navigate.html', static_url=static_url)}}
+      {%! end %}
+      {%! if client_first %}
+        <div class="nav navbar-nav nav_filt form-filters">
+        {{! Block.run('navbar-filter', name='Client', param='Client', default=args.get('Client',[''])[0]) }}
+        </div>
+      {%! end %}
+      {%! if title %}
+        <a class="navbar-brand navbar-header" style="color:#fff; padding-right:1px" data-placement="bottom">
+          {{! title }}
+        </a>
+      {%! end %}
+    </div>{# .navbar-header #}
+    <div class="nav navbar-nav nav_filt form-filters">
+      {%! if not client_first %}
+        {{! Block.run('navbar-filter', name='Client', param='Client', default=args.get('Client',[''])[0]) }}
+      {%! end %}
+      <div class="filter btn-group btn-group-sm,navbar-toggle main-toggle" role="group" data-toggle="collapse">
+          {%! set tgl_dict = tgl_sel[1] %}
+          {%! for tgl in ['AD GRP', 'FCT', 'TVT'] %}
+            <button type="button" class="tgl_btns btn btn-default togg ad_grp_btn {{! 'active' if tgl_dict[tgl] == tgl_sel[0] else ''}}" style="font-size:12px;" data-href='?toggle={{!tgl_dict[tgl]}}'>{{!tgl}}</button>
+           {%! end %}
+        </div>
+        {# Block.run('navbar-datepicker', type='dropdown', dates=args['Date']) #}
+        {{ Block.run('navbar-datepicker', type='dropdown', dates=dates) }}
+        {%! for x in multifilters %}
+           {{! Block.run('navbar-filter', name=x[0], param=x[1], default=x[2]) }}
+        {%! end %}
+       <span class="filter-buttons navbar-form filter">
+        <button class="btn btn-submit" type="submit" accesskey="s">Submit</button>
+      </span>
+    </div>
+      <input type="text" class="hide" autocomplete="off" name='toggle' value="{{!tgl_sel[0]}}">
+      {%! for input in hide_inputs %}
+        <input type="text" class="hide" name='{{!input}}' autocomplete="off"  value="{{!hide_inputs[input]}}">
+      {%! end %}
+      {%! if search %}
+      <div class="nav navbar-nav form-filters nav_filt" >
+        <input type="text" class="form-control search_word" style="width:120px" placeholder="Search" />
+      </div>
+      {%! end %}
+      {# Display options dropdown on the right portion of the navbar #}
+      <ul class="nav navbar-nav navbar-right">
+        {{! Block.run('options-dropdown', handler=handler, download=download) }}
+         <li>
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" title="Options" data-placement="bottom"><i class="glyphicon glyphicon-cog"></i> <b class="caret"></b></a>
+          <ul class="dropdown-menu">
+            {%! if handler %}
+            <li><a href="{{! handler.get_login_url() }}?next={{! handler.request.uri }}">{{! handler.get_current_user() or 'Sign in' }}</a>
+            {%! end %}
+          </ul>
+         </li>
+      </ul>
+    {# .navbar-collapse #}
+  </div>{# .container #}
+</form>{# .navbar #}
+
+{% end %}
+
+
+{# options-dropdown
+   ------------------------------------------------------------------------------
+
+#}
+{% apply Block.name('options-dropdown', persist=True) %}
+  {%! if download %}
+    <li><a href="#" class="what_works dropdown-toggle" data-toggle="dropdown" data-placement="bottom" title="download data/image"><i class="glyphicon glyphicon-download-alt" style="color: #fff;" ></i><b class="caret"></b></a>
+      <ul class="dropdown-menu">
+        <li><a class="downloadCsv" href="{{downld_temp}}{{! handler.request.uri[len(handler.request.path):] }}">Download Data</a></li>
+        <li><a href="http://{{! (handler.request.host).split(':')[0]}}:8000/?url={{! quote('http://' + handler.request.host + handler.request.uri[:len(handler.request.path)] + handler.request.uri[len(handler.request.path):]) + '&file=client_overview.png&width=400'}}">Download Image</a></li>
+      </ul>
+    </li>
+  {%! end %}
+{% end %}
+
+
+{# footer
+   ------------------------------------------------------------------------------
+   Displays the footer at the bottom of the page, along with common Javascript.
+   Must be run at the bottom of every page. All parameters are required.
+   Block.run('footer', handler=, share=)
+
+   handler: Just pass `handler=handler`
+   share:   Text to pass to Twitter (and perhaps other social media icons)
+#}
+{% apply Block.name('footer', persist=True) %}
+<script src="{{! static_url('../common/common.js') }}"></script>
+<script src="{{! static_url('../../static/js/insights.js') }}"></script>
+<script>
+  $('body')
+    // Anything with a title= or data-title= attribute will be shown as a tooltip
+    .tooltip({selector: '[title],[data-title]', container: 'body', html: true,
+      placement: function(tip, element) { //$this is implicit
+        var position = $(element).position();
+
+        if (position.left > 515) {
+            return "left";
+        }
+        if (position.left < 515) {
+            return "right";
+        }
+        if (position.top < 110){
+            return "bottom";
+        }
+        return "top";
+    }
+  })
+    // Anything with a data-height=aspect attribute will have its height set as aspect * width
+    .aspect({selector: '[data-height]'})
+    // Anything with a data-href, when clicked on, will act as a url filter
+    .urlfilter({selector: '[data-href]', attr: 'data-href'})
+    .search()
+    // prevent default click action
+    .on('click', '.dropdown-menu-form', function(e) {
+      e.stopPropagation()
+      })
+    // select dropdown elements
+    .on('click', '.dropdown-menu-form [data-select]', function(e) {
+      $(this).parents('.dropdown-menu-form')
+        .find('input:visible')
+        .prop('checked', $(this).attr('data-select').match(/select/))
+      })
+    .on('click',"ul.Client .ui-menu-item", function(){
+      $('.client_title .drop_text').text($(this).text().slice(0,10));
+      $('.client_title').attr('data-original-title', "{{! 'Client:</br>' }}"+$(this).text());
+    })
+    {%! for i, x in enumerate(multifilters) %}
+    {%! set name, param = x[0], x[1] %}
+    .on('click',"ul.{{!param}} .ui-menu-item", function(){
+      $('.filter_{{!param}} .drop_text').text($(this).text().slice(0, 10));
+      $('.filter_{{!param}}').attr('data-original-title', "{{! name + ':</br>' }}"+$(this).text());
+    })
+    {%! end %}
+
+</script>
+
+{# To include something here in EVERY page, add the code here directly.
+   To include something here in SOME pages, use the code below.
+      {% apply Block.append('tail') %} ... your content ... {% end %}
+   This can be done multiple times in a page. You can do this in sub-templates too.
+#}
+{{! Block.defer('tail') }}
+{% end %}

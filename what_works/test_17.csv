@@ -1,0 +1,153 @@
+,category,level,cat_key,level_key,prog_metric,metric_share,client_metric,client_share,genre,ntwk
+0,Bhojpuri GEC,OTHERS,656,2006,249.3227465,308.924414,,,Bhojpuri GEC,OTHERS
+1,Bhojpuri GEC,Reliance,656,2008,59.6016675,308.924414,,,Bhojpuri GEC,Reliance
+2,Gujarati News,OTHERS,658,2006,70.2459015,70.427211,,,Gujarati News,OTHERS
+3,Gujarati News,Viacom,658,2027,0.1813095,70.427211,,,Gujarati News,Viacom
+4,Kannada Comedy,Sun Network,659,2004,144.6023015,144.6023015,,,Kannada Comedy,Sun Network
+5,English Music,9X Media,661,2013,0.769013,12.431664,,,English Music,9X Media
+6,English Music,Viacom,661,2027,11.662651,12.431664,,,English Music,Viacom
+7,Malayalam Music,Sun Network,662,2004,73.6160225,131.3053125,,,Malayalam Music,Sun Network
+8,Malayalam Music,OTHERS,662,2006,57.68929,131.3053125,,,Malayalam Music,OTHERS
+9,Kannada Kids,Sun Network,665,2004,62.584831,62.584831,,,Kannada Kids,Sun Network
+10,Tamil INFO,Discovery Network,667,2025,53.4505965,53.4505965,,,Tamil INFO,Discovery Network
+11,Telugu Comedy,Sun Network,678,2004,87.31307,87.31307,,,Telugu Comedy,Sun Network
+12,Tamil Music,Sun Network,680,2004,527.3281735,527.3281735,,,Tamil Music,Sun Network
+13,English INFO,Zee Network,682,2002,8.905039,826.2188965,,,English INFO,Zee Network
+14,English INFO,Star Network,682,2005,180.9400505,826.2188965,,,English INFO,Star Network
+15,English INFO,Discovery Network,682,2025,519.0597185,826.2188965,,,English INFO,Discovery Network
+16,English INFO,Viacom,682,2027,117.3140885,826.2188965,,,English INFO,Viacom
+17,Tamil Kids,OTHERS,686,2006,225.00511,225.00511,,,Tamil Kids,OTHERS
+18,Malayalam Kids,Sun Network,688,2004,212.1076665,212.1076665,,,Malayalam Kids,Sun Network
+19,Telugu News,Sun Network,691,2004,0.081852,481.068485,,,Telugu News,Sun Network
+20,Telugu News,OTHERS,691,2006,480.986633,481.068485,,,Telugu News,OTHERS
+21,Telugu Movies,Sun Network,693,2004,605.50308,894.071624,,,Telugu Movies,Sun Network
+22,Telugu Movies,Star Network,693,2005,288.568544,894.071624,,,Telugu Movies,Star Network
+23,Bengali Music,OTHERS,696,2006,56.6452365,56.6452365,,,Bengali Music,OTHERS
+24,Bhojpuri Music,OTHERS,697,2006,26.652107,26.652107,,,Bhojpuri Music,OTHERS
+25,Bengali GEC,Zee Network,704,2002,933.732798,2109.26117,,,Bengali GEC,Zee Network
+26,Bengali GEC,Star Network,704,2005,1030.753877,2109.26117,,,Bengali GEC,Star Network
+27,Bengali GEC,OTHERS,704,2006,0.0,2109.26117,,,Bengali GEC,OTHERS
+28,Bengali GEC,Doordarshan,704,2018,4.349297,2109.26117,,,Bengali GEC,Doordarshan
+29,Bengali GEC,Viacom,704,2027,140.425198,2109.26117,,,Bengali GEC,Viacom
+30,Hindi News,Zee Network,705,2002,578.8328735,3967.655552,,,Hindi News,Zee Network
+31,Hindi News,OTHERS,705,2006,1708.594211,3967.655552,,,Hindi News,OTHERS
+32,Hindi News,NDTV Group,705,2015,177.7092945,3967.655552,,,Hindi News,NDTV Group
+33,Hindi News,TV Today Group,705,2017,682.7960465,3967.655552,,,Hindi News,TV Today Group
+34,Hindi News,Doordarshan,705,2018,9.5294655,3967.655552,,,Hindi News,Doordarshan
+35,Hindi News,ABP,705,2024,465.2682425,3967.655552,,,Hindi News,ABP
+36,Hindi News,Viacom,705,2027,344.9254185,3967.655552,,,Hindi News,Viacom
+37,Telugu GEC,Zee Network,707,2002,1879.13402,6087.3425355,,,Telugu GEC,Zee Network
+38,Telugu GEC,Sun Network,707,2004,1185.6965025,6087.3425355,,,Telugu GEC,Sun Network
+39,Telugu GEC,Star Network,707,2005,1664.1714525,6087.3425355,,,Telugu GEC,Star Network
+40,Telugu GEC,OTHERS,707,2006,1356.7490015,6087.3425355,,,Telugu GEC,OTHERS
+41,Telugu GEC,Doordarshan,707,2018,1.591559,6087.3425355,,,Telugu GEC,Doordarshan
+42,English News,OTHERS,708,2006,7.5530235,50.7482915,,,English News,OTHERS
+43,English News,Times Group,708,2012,19.6663615,50.7482915,,,English News,Times Group
+44,English News,9X Media,708,2013,2.0877335,50.7482915,,,English News,9X Media
+45,English News,NDTV Group,708,2015,7.6100715,50.7482915,,,English News,NDTV Group
+46,English News,Viacom,708,2027,13.8311015,50.7482915,,,English News,Viacom
+47,Kannada News,Sun Network,709,2004,3.375012,311.460848,,,Kannada News,Sun Network
+48,Kannada News,OTHERS,709,2006,308.085836,311.460848,,,Kannada News,OTHERS
+49,English Lifestyle,Star Network,710,2005,25.412916,50.0434015,,,English Lifestyle,Star Network
+50,English Lifestyle,OTHERS,710,2006,0.204144,50.0434015,,,English Lifestyle,OTHERS
+51,English Lifestyle,NDTV Group,710,2015,4.997454,50.0434015,,,English Lifestyle,NDTV Group
+52,English Lifestyle,Discovery Network,710,2025,19.4288875,50.0434015,,,English Lifestyle,Discovery Network
+53,Marathi Music,OTHERS,714,2006,14.321044,82.848966,,,Marathi Music,OTHERS
+54,Marathi Music,9X Media,714,2013,68.527922,82.848966,,,Marathi Music,9X Media
+55,Bengali Movies,Sony Network,716,2001,84.2487875,478.8268245,,,Bengali Movies,Sony Network
+56,Bengali Movies,Zee Network,716,2002,65.3710465,478.8268245,,,Bengali Movies,Zee Network
+57,Bengali Movies,Star Network,716,2005,169.4881645,478.8268245,,,Bengali Movies,Star Network
+58,Bengali Movies,OTHERS,716,2006,159.718826,478.8268245,,,Bengali Movies,OTHERS
+59,English Kids,Discovery Network,718,2025,139.410308,139.410308,,,English Kids,Discovery Network
+60,Gujarati GEC,Doordarshan,725,2018,3.241793,42.894304,,,Gujarati GEC,Doordarshan
+61,Gujarati GEC,Viacom,725,2027,39.652511,42.894304,,,Gujarati GEC,Viacom
+62,Malayalam GEC,Sun Network,730,2004,250.9843595,2705.6142805,,,Malayalam GEC,Sun Network
+63,Malayalam GEC,Star Network,730,2005,1670.94413,2705.6142805,,,Malayalam GEC,Star Network
+64,Malayalam GEC,OTHERS,730,2006,780.074963,2705.6142805,,,Malayalam GEC,OTHERS
+65,Malayalam GEC,Doordarshan,730,2018,3.610828,2705.6142805,,,Malayalam GEC,Doordarshan
+66,Hindi Music,Sony Network,732,2001,176.785596,1844.2041725,,,Hindi Music,Sony Network
+67,Hindi Music,Zee Network,732,2002,92.867931,1844.2041725,,,Hindi Music,Zee Network
+68,Hindi Music,OTHERS,732,2006,828.6285595,1844.2041725,,,Hindi Music,OTHERS
+69,Hindi Music,Times Group,732,2012,53.3378425,1844.2041725,,,Hindi Music,Times Group
+70,Hindi Music,9X Media,732,2013,560.9980465,1844.2041725,,,Hindi Music,9X Media
+71,Hindi Music,Disney UTV,732,2026,127.1682345,1844.2041725,,,Hindi Music,Disney UTV
+72,Hindi Music,Viacom,732,2027,4.4179625,1844.2041725,,,Hindi Music,Viacom
+73,Marathi GEC,Zee Network,739,2002,1105.7859635,1828.675765,,,Marathi GEC,Zee Network
+74,Marathi GEC,Star Network,739,2005,190.7769555,1828.675765,,,Marathi GEC,Star Network
+75,Marathi GEC,OTHERS,739,2006,107.485865,1828.675765,,,Marathi GEC,OTHERS
+76,Marathi GEC,Doordarshan,739,2018,5.3538055,1828.675765,,,Marathi GEC,Doordarshan
+77,Marathi GEC,Viacom,739,2027,419.2731755,1828.675765,,,Marathi GEC,Viacom
+78,Tamil Movies,Sun Network,740,2004,1178.9230705,1242.284005,,,Tamil Movies,Sun Network
+79,Tamil Movies,OTHERS,740,2006,63.3609345,1242.284005,,,Tamil Movies,OTHERS
+80,Tamil GEC,Zee Network,741,2002,276.026916,7032.552157,,,Tamil GEC,Zee Network
+81,Tamil GEC,Sun Network,741,2004,5430.2257035,7032.552157,,,Tamil GEC,Sun Network
+82,Tamil GEC,Star Network,741,2005,828.1831765,7032.552157,,,Tamil GEC,Star Network
+83,Tamil GEC,OTHERS,741,2006,493.306422,7032.552157,,,Tamil GEC,OTHERS
+84,Tamil GEC,Doordarshan,741,2018,4.809939,7032.552157,,,Tamil GEC,Doordarshan
+85,Kannada Music,Sun Network,744,2004,158.3439815,222.1447995,,,Kannada Music,Sun Network
+86,Kannada Music,OTHERS,744,2006,63.800818,222.1447995,,,Kannada Music,OTHERS
+87,Hindi Others,Zee Network,749,2002,25.5199325,377.570785,,,Hindi Others,Zee Network
+88,Hindi Others,OTHERS,749,2006,19.715268,377.570785,,,Hindi Others,OTHERS
+89,Hindi Others,Doordarshan,749,2018,332.3309885,377.570785,,,Hindi Others,Doordarshan
+90,Hindi Others,Viacom,749,2027,0.004596,377.570785,,,Hindi Others,Viacom
+91,Hindi Kids,Turner Group,753,2016,1153.826147,2720.1450925,,,Hindi Kids,Turner Group
+92,Hindi Kids,Disney UTV,753,2026,644.0170015,2720.1450925,,,Hindi Kids,Disney UTV
+93,Hindi Kids,Viacom,753,2027,922.301944,2720.1450925,,,Hindi Kids,Viacom
+94,Marathi News,Zee Network,754,2002,78.114971,254.1373295,,,Marathi News,Zee Network
+95,Marathi News,OTHERS,754,2006,52.9713855,254.1373295,,,Marathi News,OTHERS
+96,Marathi News,ABP,754,2024,83.053101,254.1373295,,,Marathi News,ABP
+97,Marathi News,Viacom,754,2027,39.997872,254.1373295,,,Marathi News,Viacom
+98,Malayalam Movies,Sun Network,755,2004,194.9932185,441.656688,,,Malayalam Movies,Sun Network
+99,Malayalam Movies,Star Network,755,2005,246.6634695,441.656688,,,Malayalam Movies,Star Network
+100,Bengali News,Zee Network,756,2002,99.1493175,407.4867615,,,Bengali News,Zee Network
+101,Bengali News,OTHERS,756,2006,146.857075,407.4867615,,,Bengali News,OTHERS
+102,Bengali News,ABP,756,2024,161.480369,407.4867615,,,Bengali News,ABP
+103,Tamil News,Sun Network,757,2004,13.9890325,163.833008,,,Tamil News,Sun Network
+104,Tamil News,OTHERS,757,2006,149.8439755,163.833008,,,Tamil News,OTHERS
+105,Marathi Movies,Zee Network,758,2002,310.1930495,321.3332515,,,Marathi Movies,Zee Network
+106,Marathi Movies,OTHERS,758,2006,11.140202,321.3332515,,,Marathi Movies,OTHERS
+107,Kannada GEC,Zee Network,769,2002,644.6012535,2046.210747,,,Kannada GEC,Zee Network
+108,Kannada GEC,Sun Network,769,2004,420.1854835,2046.210747,,,Kannada GEC,Sun Network
+109,Kannada GEC,Star Network,769,2005,353.90975,2046.210747,,,Kannada GEC,Star Network
+110,Kannada GEC,Doordarshan,769,2018,1.6913685,2046.210747,,,Kannada GEC,Doordarshan
+111,Kannada GEC,Viacom,769,2027,625.8228915,2046.210747,,,Kannada GEC,Viacom
+112,Telugu Music,Sun Network,770,2004,193.7376495,288.718172,,,Telugu Music,Sun Network
+113,Telugu Music,Star Network,770,2005,94.9805225,288.718172,,,Telugu Music,Star Network
+114,Malayalam News,Star Network,771,2005,61.7006305,192.8259495,,,Malayalam News,Star Network
+115,Malayalam News,OTHERS,771,2006,131.125319,192.8259495,,,Malayalam News,OTHERS
+116,Telugu Kids,OTHERS,773,2006,51.7046535,51.7046535,,,Telugu Kids,OTHERS
+117,Kannada Movies,Sun Network,777,2004,525.599342,604.128543,,,Kannada Movies,Sun Network
+118,Kannada Movies,Star Network,777,2005,78.529201,604.128543,,,Kannada Movies,Star Network
+119,English GEC,Sony Network,789,2001,6.011652,27.754196,,,English GEC,Sony Network
+120,English GEC,Zee Network,789,2002,5.5064455,27.754196,,,English GEC,Zee Network
+121,English GEC,Star Network,789,2005,4.2807075,27.754196,,,English GEC,Star Network
+122,English GEC,Times Group,789,2012,11.011828,27.754196,,,English GEC,Times Group
+123,English GEC,Viacom,789,2027,0.943563,27.754196,,,English GEC,Viacom
+124,English Movies,Sony Network,807,2001,63.695529,316.0944775,,,English Movies,Sony Network
+125,English Movies,Zee Network,807,2002,43.0556875,316.0944775,,,English Movies,Zee Network
+126,English Movies,Star Network,807,2005,84.7019405,316.0944775,,,English Movies,Star Network
+127,English Movies,Times Group,807,2012,74.2687595,316.0944775,,,English Movies,Times Group
+128,English Movies,Turner Group,807,2016,50.372561,316.0944775,,,English Movies,Turner Group
+129,Hindi Movies,Sony Network,808,2001,3086.289884,10244.0330855,,,Hindi Movies,Sony Network
+130,Hindi Movies,Zee Network,808,2002,3612.2480965,10244.0330855,,,Hindi Movies,Zee Network
+131,Hindi Movies,Star Network,808,2005,2057.7771275,10244.0330855,,,Hindi Movies,Star Network
+132,Hindi Movies,OTHERS,808,2006,486.59968,10244.0330855,,,Hindi Movies,OTHERS
+133,Hindi Movies,Sahara Network,808,2014,46.3674465,10244.0330855,,,Hindi Movies,Sahara Network
+134,Hindi Movies,Disney UTV,808,2026,954.750851,10244.0330855,,,Hindi Movies,Disney UTV
+135,Hindi Youth,Star Network,829,2005,73.7159785,360.9866625,,,Hindi Youth,Star Network
+136,Hindi Youth,Disney UTV,829,2026,136.992559,360.9866625,,,Hindi Youth,Disney UTV
+137,Hindi Youth,Viacom,829,2027,150.278125,360.9866625,,,Hindi Youth,Viacom
+138,Hindi Lifestyle,Zee Network,830,2002,5.543708,12.8545265,,,Hindi Lifestyle,Zee Network
+139,Hindi Lifestyle,OTHERS,830,2006,7.3108185,12.8545265,,,Hindi Lifestyle,OTHERS
+140,Hindi GEC,Sony Network,831,2001,4876.158776,24252.32354,,,Hindi GEC,Sony Network
+141,Hindi GEC,Zee Network,831,2002,5335.24021,24252.32354,,,Hindi GEC,Zee Network
+142,Hindi GEC,Star Network,831,2005,9081.794918,24252.32354,,,Hindi GEC,Star Network
+143,Hindi GEC,Reliance,831,2008,48.5268755,24252.32354,,,Hindi GEC,Reliance
+144,Hindi GEC,Sahara Network,831,2014,48.3195405,24252.32354,,,Hindi GEC,Sahara Network
+145,Hindi GEC,Viacom,831,2027,4862.28322,24252.32354,,,Hindi GEC,Viacom
+146,Sports,Sony Network,832,2001,19.764131,828.6766034,,,Sports,Sony Network
+147,Sports,Zee Network,832,2002,218.7760395,828.6766034,,,Sports,Zee Network
+148,Sports,Star Network,832,2005,589.6618184,828.6766034,,,Sports,Star Network
+149,Sports,Doordarshan,832,2018,0.097843,828.6766034,,,Sports,Doordarshan
+150,Sports,Nimbus,832,2028,0.3767715,828.6766034,,,Sports,Nimbus
+151,Bhojpuri Movies,OTHERS,833,2006,26.158468,26.158468,,,Bhojpuri Movies,OTHERS

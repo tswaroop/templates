@@ -1,0 +1,99 @@
+{{ GRAMEX(cache=['snippets.html', '../../static/css/style.css', 'logo.png', 'bubblechart.html', 'scatterplot.svg', 'table.html', '../common/common.py', 'cell-bar.svg']) }}{% code %}
+import what_works
+import sys
+import datetime
+from templates.common import common
+T('snippets.html', DB=DB, static_url=static_url, clients=['HUL'], dates=['01/01/2015', '01/01/2015'])
+{% end %}
+<!DOCTYPE html><html lang="en">
+<head>
+  {{ Block.run('header', title="title") }}
+</head>
+<style >
+
+.insights{
+  right: -360px;
+  transition: 2s;
+  overflow: hidden;
+  border-color: #fff;
+  position: fixed; 
+  border-width:0px; 
+  border-style: solid; 
+  width: 400px; 
+  height: 100%; 
+  top: 30%; 
+  display: block;
+  color: #fff;
+}
+
+.insights .title{
+  float: left;
+  cursor: pointer; 
+  display: block; 
+  height: 90px; 
+  width: 40px;
+  border: 1px solid #4D4D4D;
+  background-color: rgb(51, 51, 51);
+  border-radius: 6px 0px 0px 6px;
+}
+.rotate-bt {
+  transform: rotate(-90deg);
+}
+.insights p{
+  margin-top: 40px;
+}
+.insights .panelBox{
+  position: relative; 
+  left: 40px; 
+  width: 360px; 
+  outline: transparent solid 1px; 
+  min-height: 130px; 
+  border: 1px solid #4D4D4D; 
+  height: 100%; 
+  background: #cfcfcf transparent;
+}
+.insights.clicked{
+    right: 0px;
+ }
+
+
+</style>
+<body style="background-color: #000">
+<!-- Single button -->
+<!-- Single button -->
+  <div class="btn-group">
+  <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    Action <span class="caret"></span>
+  </button>
+    <ul class="dropdown-menu dropdown-menu-form scroll" role="menu">
+        <li class="active">
+        </li>
+        <li class="control">
+          <div class="item">
+            <input type="search" class="form-control input-xs" placeholder="Search name" data-search="@text">
+          </div>
+        </li>
+    </ul>
+  </div>
+
+<div class="insights">
+  <div class="title"><p class="rotate-bt">Insights</p></div>
+  <div class="panelBox">
+    <h3>Insights</h3>
+    <ul>
+      <li>Insight1</li>
+      <li>Insight2</li>
+      <li>Insight3</li>
+      <li>Insight4</li>
+    </ul>
+  </div>
+</div>
+</div><!--.container -->
+<script type="text/javascript">
+
+</script>
+<script type="text/javascript">
+</script>
+{{ Block.run('footer', handler=handler, share='Check out this visualisation') }}
+</body>
+</html>

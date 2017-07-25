@@ -1,0 +1,23 @@
+{% code %}
+  import json
+  try:
+    userid = handler.get_current_user()
+  except:
+    userid = 'Unknown'
+{% end %}
+
+<script type="text/javascript">
+  var _paq = _paq || [];
+  _paq.push(['trackPageView']);
+  _paq.push(['enableLinkTracking']);
+  (function() {
+    var u="//starinprappl53.in.startv.com:81/";
+    _paq.push(['setTrackerUrl', u+'piwik.php']);
+    _paq.push(['setSiteId', 1]);
+    _paq.push(['setUserId', {{json.dumps(userid)}}])
+    var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+    g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+  })();
+</script>
+<noscript><p><img src="//starinprappl53.in.startv.com:81/piwik.php?idsite=1" style="border:0;" alt="" /></p></noscript>
+

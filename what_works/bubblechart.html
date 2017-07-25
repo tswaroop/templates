@@ -1,0 +1,137 @@
+{% set W, H = 500, 436 %}
+{% code %}
+from math import floor
+_ = globals().get
+
+b_margin = 7.5
+x = W * (b_margin) / 100
+y = H * 4 / 100
+w = W * (100 - 2 * b_margin) / 100
+h = H * (100 - 2 * b_margin) / 100
+# data = pd.read_csv('gnr_ntwk.csv')
+
+from numpy import inf, nan
+from what_works import get_ntwk_cols, cat_level, slug, decode_special
+from templates.common.common import st_unt
+
+cat_list = cat_level[cat_display]
+clnt_mtrc = 'Client'+' '+met_dict[metric]
+category = cat_list[0]
+level = cat_list[1]
+prog_metric = 'Total' + ' ' + met_dict[metric]
+max_val, min_val = data_bub[clnt_mtrc].dropna().max(), data_bub[clnt_mtrc].dropna().min()
+
+def get_bub_title(v):
+  title = """<h5 class='tooltip-title' style="border-bottom:#000 solid 1px">{:s} - {:s}</h5><table class='table table-condensed table-right'><tbody class="text-left"><tr><td><strong>{:s}</strong></td><td>:</td><td style="text-align:right">{:,.0f}</td></tr><tr><td><strong>{:s}</strong></td><td>:</td><td style="text-align:right">{:,.0f}</td></tr><tr><td><strong>{:s}</strong></td><td>:</td><td style="text-align:right">{:.2f}%</td></tr></tbody></table>"""
+  title = title.format(v[category], v[level], prog_metric, (v[prog_metric]),
+  "Client "+met_dict[metric], v[clnt_mtrc],
+  "Affinity", v['Affinity'])
+  # title = 'y-pos:{:,.2f}, size:{:,.2f}, x-pos{:,.2f}'.format(v[prog_metric],
+  # v[clnt_mtrc], v['Affinity%'])
+  # print title
+  return title
+
+def get_ct_ntwk(v, ntwk_col_dict):
+  ntwk = v['ntwk']
+  catgry = decode_special(v[category])
+  lvl = decode_special(v[level])
+  if ntwk in ntwk_col_dict:
+    ntwk = slug(v['ntwk'].split(' ')[0].title())
+  else:
+    ntwk = 'Others'
+  return [slug(catgry)+'-'+slug(lvl), ntwk]
+
+
+def get_search_title(v):
+  catgr = decode_special(v[category])
+  lvl = decode_special(v[level])
+  ntwk = decode_special(v['ntwk'])
+  gnr = decode_special(v['genre'])
+  search_str = catgr+' '+lvl+' '+ntwk+' '+gnr
+  return search_str
+
+ntwk_col_dict = {}
+ntwk_cols = get_ntwk_cols()
+others_col = ntwk_cols.get('others', '#ffffff')
+def apply_ntwk_colrs():
+  for ntwk in ntwks:
+    ntwk_key = ntwk.lower()
+    ntwk_col_dict[ntwk] = ntwk_cols.get(ntwk_key)
+  return ntwk_col_dict
+
+def get_units(v):
+  return st_unt(v)
+{% end %}
+{#% set color = stats.Map([1, 1.2, 1.4], ['#D73027', '#FFFFBF', '#1A9850'], clamp=True) %#}
+<svg width="100%" data-height="{{float(H) / W }}" viewBox="0 0 {{W}} {{H}}" preserveAspectRatio="xMidYMid" class="transparent-text highlight-controls" id="bub_chrt_cnvs">
+    {% set data_bub['Affinity'] = data_bub['Affinity'].replace(inf, nan) %}
+    {% set max_afnty = data_bub['Affinity'].dropna().max() %}
+    {% set lo_afnty = data_bub['Affinity'].dropna().min() %}
+    {% set max_metric = data_bub[prog_metric].dropna().max() %}
+    {% set min_metric = data_bub[prog_metric].dropna().min() %}
+    {% set ntwk_col_dict = apply_ntwk_colrs() %}
+    {% code %}
+    if min_metric == max_metric:
+      max_metric = min_metric + 1
+    y_map = stats.Map([min_metric, max_metric], [h, 0], clamp=True)
+    rect_h = y_map((min_y_val + max_y_val) / 2.)
+
+    {% end %}
+    <text x="{{x + 10}}" y="{{0}}" text-anchor='start' style="fill:#fff" dominant-baseline='hanging'>Bubble Size: Client {{met_dict[metric]}}s</text>
+    <text x="{{x + w + 10}}" y="{{0}}" text-anchor='end' style="fill:#fff" dominant-baseline='hanging'>Bubble Color: Network</text>
+    <text x="{{x + w / 2.}}" y="{{y + h + 25}}" text-anchor='middle' style="fill:#fff" dominant-baseline='middle'>TG Affinity%</text>
+    <text x="{{ 4 }}" y="{{y + h / 2.}}" text-anchor='middle' style="fill:#fff" dominant-baseline='middle' transform="rotate(-90 6.8,{{y+h/2.}})">Total {{met_dict[metric]}}</text>
+    <g transform="translate({{x+10}}, {{y}})" class="bubble_chart highlight-target">
+    {% set bub_r = 30. %}
+    {% set x_factor = ((8) * (max_afnty - lo_afnty) / 100) %}
+    {% set x_lo, x_hi = lo_afnty - x_factor, max_afnty + x_factor %}
+    {% set y_lo, y_hi = min_metric * 0.9, max_metric * 1.09 %}
+    {% code %}
+    if x_lo == x_hi:
+      x_hi = x_hi + 1
+      x_lo = x_lo - 1
+    if y_lo == y_hi:
+      y_hi  = y_hi + 10
+
+    {% end %}
+    {{ T('scatterplot.svg',
+    width=w, height=h,
+    x=0,
+    y=0,
+    data=data_bub.fillna(0),
+    cx=lambda v: v['Affinity'],
+    cy=lambda v: v[prog_metric],
+    r=lambda v: v[clnt_mtrc] / max_val * 10.,
+    xlo=x_lo,   # Explicitly set x lo and hi.
+    xhi=x_hi,   # Remember to change data= in axis.svg appropriately
+    rhi=10,     # A value of 10 returned by r will map to...
+    ylo=y_lo,
+    yhi=y_hi,
+    R=bub_r,     # ... a radius of 20px
+    regression=False,
+    equation=['r2', 'eq'],
+    line_ypos=50,
+    rect_h_s = rect_h,
+    line_xpos=50,
+    color=lambda v: ntwk_col_dict[v['ntwk']] if v['ntwk'] in ntwk_col_dict else others_col,
+    title=lambda v: get_bub_title(v),
+    rotate=-45,
+    metric=met_dict[metric],
+     attrs={'opacity': 1, 'data-search': lambda v, i: get_search_title(v), 'data-highlight': lambda v, i: "."+get_ct_ntwk(v, ntwk_col_dict)[0], 'data-target':".highlight-target .table_metric tr", 'data-toggle':"0", 'class': lambda v, i: ' '.join(get_ct_ntwk(v, ntwk_col_dict))}
+     ) }}
+
+     {{ T('axis.svg', cls='xaxis', x=0, y=h, axis='x', size=w, data=[x_lo, x_hi], ticks=5, gridsize=-h, minors=2, minorsize=-h, gridattrs={'stroke':'#fff', 'stroke-width': ".02px"}, minorattrs={'stroke':'#fff', 'stroke-width': ".1px"}, tickattrs={'stroke':'#636363'}, textattrs={'fill':'#fff'}) }}
+     {{ T('axis.svg', x=0, y=0, axis='y', size=h, data=[y_lo, y_hi], ticks=5, gridsize=w, ticksize=-5, gridattrs={'stroke':'#fff', 'stroke-width': ".1px"}, minorattrs={'stroke':'#fff', 'stroke-width': ".1px"}, tickattrs={'stroke':'#636363'}, textattrs={'fill':'#fff'}, format=lambda ticks: [get_units(int(t)) for t in ticks])
+     }}
+    </g>
+    <g transform="translate({{x+10}}, {{y}})">
+    {% set oth = 0 %}
+    {% for i, e in enumerate(sorted(ntwk_col_dict.keys())) %}
+    {% set ntwk_tit = e.split(' ')[0].title() %}
+    <rect x="{{ (w / 5. + 10)*(i) }}" y="{{ H-y-10 }}" width="{{ 10 }}" height="10" style="fill: {{ntwk_col_dict[e]}}; stroke: #fff; stroke-width: 0.4px" title="{{e}}" data-highlight=".{{slug(ntwk_tit)}}"data-toggle="0" data-target=".highlight-target circle"></rect>
+    <text x="{{(w / 5. + 10) * (i) + 12}}" y="{{H-y-10}}" text-anchor="start" style="fill:#fff" dy=".75em" title="{{e}}">{{ntwk_tit}}</text>
+    {% set oth += 1 %}
+    {% end %}
+    <rect x="{{ (w / 5. + 10) * (oth) }}" y="{{ H-y-10 }}" width="{{ 10 }}" height="10" dominant-baseline="initial" style="fill: {{others_col}}; stroke: #fff; stroke-width: 0.4px" title="{{'Others'}}" data-highlight=".Others"data-toggle="0" data-target=".highlight-target circle"></rect>
+    <text x="{{(w / 5. + 10) * (oth) + 12}}" y="{{H-y-10}}" text-anchor="start" style="fill:#fff" dy=".75em">Others</text></g>
+</svg>

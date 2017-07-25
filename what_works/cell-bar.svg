@@ -1,0 +1,10 @@
+{% code %}
+from utils import attrs, common_params
+_ = globals().get
+lo = _('lo', 0)
+hi = _('hi', 1)
+v = (float(data) - lo) / ((hi - lo) or 1)
+{% end %}
+
+<rect x="{{ _('x', 0) }}" y="{{ _('y', 0) - height/2 }}" width="{{ width * (0.05 + v) }}" height="{{ height }}" {{ attrs(_('attrs'), {'fill': '#A7C0DF'}) }} opacity="0.84"/>
+<text x="{{ _('x', 0) }}" y="{{ _('y', 0) }}" dominant-baseline="middle" text-anchor="start" {{ attrs(_('textattrs')) }}>{{ _('text', data) }}</text>

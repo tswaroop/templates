@@ -1,0 +1,239 @@
+{{ GRAMEX(cache=['program_ratings.html', 'detailed_revenue.html', 'market_share.html', 'genre_performance.html', '../../snippets.html']) }}
+{{ GRAMEX(users= lambda v: True)}}
+{% code %}
+from templates.common import common
+title = 'My Reports'
+from templates.common import session_maintain as sm
+sm.avoid_session_hijacking(handler, args)
+
+T('../../snippets.html', DB=DB, static_url=static_url)
+import json
+import data_preprocess as dp
+
+if 'emp_channels' not in DB:
+  print 'DB calc'
+  DB['emp_channels'] = dp.get_emp_channels()
+
+if 'emp_keys' not in DB:
+  DB['emp_keys'] = dp.get_emp_keys()
+
+
+
+
+dim_date = dp.get_data('DIM_DATE', DB)
+ref_tg_mkt = dp.get_data('REF_TG_MKT', DB)
+emp_access = dp.get_data('REF_EMPLOYEE_ACCESS', DB)
+emp_hierarchy = dp.get_data('REF_EMPLOYEE_HIERARCHY', DB)
+ref_genre_tg = dp.get_data('REF_GENRE_TG_MKT', DB)
+genre_tg_mkt = dp.get_data('REF_TG_MKT', DB)
+channel_grp = dp.get_data('DIM_CHANNEL_GROUP', DB)
+tam_tg_mkt = ref_tg_mkt[(ref_tg_mkt['SOURCE']=="CUST_SALES")]
+barc_tg_mkt = ref_tg_mkt[(ref_tg_mkt['SOURCE']=="CUST_SALES/BARC")]
+tab = args.get('tab', ['my_reports_program_ratings'])[0]
+
+import re
+from tornado.web import HTTPError
+from admin.auth import AuthError
+#pattern = re.compile("starin[^\w']")
+#user_id = pattern.sub('', handler.get_current_user()).upper()
+user_id = handler.get_current_user().upper().split('\\')[1]
+if user_id in ['GRAMENER_SSO_TEST1', 'GRAMENER_SSO_TEST2']:
+    user_id = 'JAINA'
+
+user_key = emp_hierarchy[emp_hierarchy['EMPLOYEE_NT_ID'] == user_id]['EMPLOYEE_KEY']
+
+# function responsible for validating user's access rights return true on successful verification
+common.get_user_access(handler.get_current_user(), tab)
+
+#function responsible for checking the data refresh status, returns true on successful verification
+common.get_refresh_status(tab)
+
+if len(user_key) == 1:
+    valid_user = True if len(emp_access[emp_access['EMPLOYEE_KEY'] == user_key.values[0]]) else False
+else:
+    valid_user = False
+
+# if not valid_user:
+#    raise HTTPError(401, '%s not allowed' % user_id)
+
+max_date = datetime.datetime.strftime(pd.to_datetime(dp.get_max_date().values[0][0]), '%Y/%m/%d')
+print max_date
+print '======================'
+ref_tg_mkt = ref_tg_mkt[['TG_DISPLAY_NAME','MARKET_DISPLAY_NAME', 'TG_MARKET_DISPLAY_NAME', 'TG_KEY', 'MARKET_KEY']].drop_duplicates().reset_index()
+dim_date['WEEK_YEAR'] = dim_date['BARC_WEEK'].dropna()+ '-' + dim_date['BARC_YEAR'].dropna()
+dim_date = dim_date.sort(['PRG_DATE'])
+dim_date_subset = dim_date.groupby(['WEEK_YEAR']).last()['DATE_KEY'].reset_index()
+week_keys  = json.dumps(pd.Series(dim_date_subset.DATE_KEY.values, index=dim_date_subset.WEEK_YEAR).to_dict())
+{% end %}
+
+<!DOCTYPE html><html lang="en">
+  <head>
+    {{ Block.run('header', title=title) }}
+    {{ T('../common/usage_tracker.html', handler = handler) }}
+  </head>
+  <style >
+    .display_selection{
+      color: white;
+    }
+    .nav-tabs>li>a{
+      border: 1px solid #636363;
+      border-top-left-radius: 15px;
+      border-top-right-radius: 15px;
+      font-weight: bold;
+      padding-left: 81px;
+      padding-right: 81px;
+      color: #fff;
+    }
+    .nav-tabs>li.active>a{
+      color: black;
+    }
+    .nav-tabs-section{
+      margin-top: 50px;
+      border-bottom: 1px solid #636363;
+    }
+    .tab-pane{
+      height: 300px;
+      text-align: center;
+      padding-top: 100px;
+    }
+
+    .generate{
+      padding-top: 30px;
+    }
+    .overflow{
+      height: 300px;
+      overflow-y: scroll;
+    }
+    a{
+      cursor: pointer;
+    }
+    .nav-tabs>li>a {
+      background: #000;
+      color: #fff;
+    }
+    .nav-tabs>li.active>a, .nav-tabs>li>a:hover, .nav-tabs>li.active>a:focus, .nav-tabs>li.active>a:hover{
+      background-color: #636363;
+      color: #000;
+      z-index: 0;
+      border: 1px solid #636363;
+    }
+    .nav-tabs{
+      padding-bottom: 0px;
+      border-bottom: 1px solid #636363;
+    }
+    .loading{
+      background: url("{{ static_url('../../static/images/load.gif') }}") center no-repeat rgba(0, 0, 0, .9);
+  }
+  </style>
+  <body style="background-color: #000; overflow: hidden;">
+    {{ Block.run('navbar', title=title, logo='logo.png', filter=[], args=args, handler=handler) }}
+    <div class="container">
+      <section class="nav-tabs-section">
+        <ul class="nav nav-tabs">
+        {% set tab_disp = {'my_reports_program_ratings': 'Break TVR Grid',
+                      'my_reports_detailed_revenue': 'Detailed Revenue',
+                      'my_reports_market_share': 'Market Share',
+                      'my_reports_genre_performance': 'Genre Performance'} %}
+          {% for t in ['my_reports_program_ratings', 'my_reports_detailed_revenue', 'my_reports_market_share', 'my_reports_genre_performance'] %}
+          <li class="{{'active' if tab==t else ''}}" >
+            <a class="btn load urlfilter" href="?tab={{t}}">{{tab_disp[t]}}</a></li>
+          {% end %}
+        </ul>
+        <div class="tab-content">
+          {% if tab == 'my_reports_program_ratings' %}
+          <div id="program_ratings" class="tab-pane fade in active">
+            {{ T('program_ratings.html',
+                  DB=DB,
+                  ref_tg_mkt=barc_tg_mkt,
+                  channel_grp=channel_grp,
+                  max_date=max_date,
+                ) }}
+          </div>
+          {% end %}
+          {% if tab == 'my_reports_detailed_revenue' %}
+          <div id="detailed_revenue" class="tab-pane fade in active">
+            {{ T('detailed_revenue.html',
+                  DB=DB,
+                  handler=handler,
+                  emp_access=emp_access,
+                  dim_date=dim_date,
+                  emp_hierarchy=emp_hierarchy,
+                  max_date=max_date,
+                  ) }}
+          </div>
+          {% end %}
+          {% if tab == 'my_reports_market_share' %}
+          <div id="market_share" class="tab-pane fade in active">
+            {{ T('market_share.html',
+                  DB=DB,
+                  ref_tg_mkt=barc_tg_mkt,
+                  emp_access=emp_access,
+                  emp_hierarchy=emp_hierarchy,
+                  handler=handler,
+                )}}
+          </div>
+          {% end %}
+          {% if tab == 'my_reports_genre_performance' %}
+          <div id="genre_performance" class="tab-pane fade in active">
+            {{ T('genre_performance.html',
+                  DB=DB,
+                  genre_tg_mkt=barc_tg_mkt,
+                  ref_genre_tg=ref_genre_tg,
+                  ) }}
+          </div>
+          {% end %}
+        </div>
+      </section>
+      <div class="left_menu" style="{{'display:none' if args.get('png', [0])[0]=='1' else ''}}">
+      {% set roles = common.get_emp_role(handler) %}
+      <div class="title"><p class="rotate-bt" style="margin-top: 40px;">Menu</p></div>
+      <div class="panelBox" style="padding-top: 1em">
+      {{T('../../navigate_new.html', roles=roles, Client='', toggle='', TG_Market='', BARC_TG_Market='', current_user=handler.get_current_user())}}
+      </div>
+      </div>
+    </div>
+    <script type="text/javascript">
+      var max_revenue_date = "{{max_date}}"
+      endDate_diff = parseInt((new Date() - new Date(max_revenue_date))/ 1000 / 60 / 60 / 24)
+      dr_todate = new Date(max_revenue_date)
+      //endDate_diff is used in my_reports.js
+    </script>
+    <script type="text/javascript" src="{{ static_url('my_reports.js') }}"></script>
+    <script src="{{ static_url('../../static/js/insights.js') }}"></script>
+    <script src="{{ static_url('../../templates/common/common.js') }}"></script>
+    <script type="text/javascript">
+      var star_bo_ip = 'starinprappl28';
+      var week_keys = {{week_keys}};
+      // Add this after jQuery and bootstrap.v3.min.js are included
+      // to prevent dropdown collapsing when a checkbox is picked.
+      $('.dropdown-menu').on('click', function(e) {
+        e.stopPropagation();
+      })
+
+      $( ".from_date" ).datepicker({
+          'z-index': 9999,
+          'orientation': 'top',
+          'endDate': '-' + endDate_diff + 'd',
+        });
+
+      $( ".to_date" ).datepicker({
+          'z-index': 9999,
+          'orientation': 'top',
+          'endDate': '-' + endDate_diff + 'd',
+        });
+
+      // $(".nav-tabs .urlfilter").on('click', function(e){
+      //   hash_sel = $(this).attr('href');
+      //   e.preventDefault();
+      //   window.location.hash = hash_sel;
+      // })
+      // function hash_change(){
+      //   hash = window.location.hash;
+      //   if(!hash){ window.location.hash = '#program_ratings';}
+      //   $("a.urlfilter[href='"+hash+"']").tab('show')
+      // }
+      // window.onhashchange = hash_change
+      // hash_change()
+    </script>
+  </body>
+</html>

@@ -1,0 +1,13 @@
+{% code %}
+_ = globals().get
+from utils import attrs
+x0, y0 = _('x', 0), _('y', 0)
+size = 36, 36
+w, h = _('width', size[0]), _('height', size[1])
+transform = ''
+if x0 or y0:
+    transform += 'translate({:,.4f},{:,.4f})'.format(x0, y0)
+if w != size[0] or h != size[1]:
+    transform += 'scale({:,.4f},{:,.4f})'.format(float(w) / size[0], float(h) / size[1])
+{% end %}
+<path{{ ' transform="{:s}"'.format(transform) if transform else '' }} d="M 42,24.0002L 33,24.0002L 33,43.7502L 27,43.7502L 28,44.2502L 37.50,58.2502L 48,44.2502L 54,44.7502L 42,43.7502L 42,20.0002 Z " {{ attrs(_('attrs'), {'fill': '#444'}) }}/>

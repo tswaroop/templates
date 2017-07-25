@@ -1,0 +1,118 @@
+{% code %}
+from templates.common.common import st_unt
+_ = globals().get
+comma = _('comma', False)
+datatables = _('datatables', None)
+cat_level = {'GENRE_DISPLAY_NAME': ['Genre', 'Network'], 
+    'CHANNEL_GROUP_DISPLAY_NAME': ['Channel', 'Genre'],
+    'PROGRAM_GROUP_DISPLAY_NAME': ['Show', 'Channel'] }
+
+import what_works as ww
+cat_list = ww.cat_level[cat_display]
+st_unt = st_unt
+clnt_mtrc = 'Client'+' '+met_dict[metric]
+prog_metric = 'Total'+' '+met_dict[metric]
+format_col = ww.format_col
+slug = ww.slug
+
+data_disp = data_club.drop('ntwk', axis=1)
+table_cat_lvl = 32.
+table_col = 100 - table_cat_lvl
+table_width = table_col / 6.
+table_c_h_w = table_cat_lvl / 2.
+{% end %}
+<link rel="stylesheet" type="text/css" href="{{static_url('/static/tablesorter/theme.default.css')}}">
+<style>
+th.{{slug(metric)}} {
+  width: 10%;
+}
+.t_head {
+  width:100%;
+  display: table;
+}
+.table_metric{
+  width: 100%;
+  display: block;
+  max-height: 400px;
+  overflow-y:auto;
+}
+</style>
+<div id="table_cal">
+  <table class="table table-responsive tablesorter highlight-target" id="what_works_table">
+    <thead class="t_head head1">
+      <tr>
+        <th width="{{table_cat_lvl}}%" colspan="2" style="border:0px;border-top-left-radius: 0em;"></th>
+        <th width="{{table_width*3}}%" colspan="3">{{cat_list[0].title()}} Metrics</th>
+        <th width="{{table_width*3}}%" colspan="3" style="border-top-right-radius: 0em; border-right:0px;">Client Metrics</th>
+      </tr>
+    </thead>
+    
+    <thead class="t_head head2">
+    {% set col_disp = {'Client Genre Share': 'Genre Share', 
+    metric: prog_metric, clnt_mtrc: met_dict[metric]} %}
+    <tr>
+     {% for header in data_disp.columns[:2] %}
+     {% set header = col_disp[header] if header in col_disp else header%}
+      <th width="{{table_c_h_w}}%" style="text-align:right" class="{{slug(header)}}">{{ escape(header) }}</th>
+     {% end %}
+     {% for header in data_disp.columns[2:] %}
+     {% set header = col_disp[header] if header in col_disp else header%}
+      <th width="{{table_width}}%" style="text-align:right" class="{{slug(header)}}">{{ escape(header) }}</th>
+     {% end %}
+    </tr>
+   </thead>
+
+   <tbody class="table_metric highlight-controls">
+    {% set data_cols = data_disp.columns %}
+    {% for inx in data_disp.index %}
+    {% set data_key = slug(data_disp.ix[inx,data_cols[0]]) + '-' + slug(data_disp.ix[inx,data_cols[1]]) %}
+     <tr data-search="{{data_disp.ix[inx,data_cols[0]]+ ' '+data_disp.ix[inx,data_cols[1]]}}" class="{{data_key}}" style="cursor: default">
+      {% for col_n, col in enumerate(data_cols) %}
+        {% code %}
+          txtalign = "style='text-align:right'"
+          td_wd = table_width
+          if col_n in [0, 1]:
+            td_wd = table_c_h_w
+          if col in ['Affinity', clnt_mtrc, prog_metric]:
+            txtalign = "style='text-align:right'"
+        {% end %}
+        {% set is_per = False %}
+        {% if col in ['Genre Share', 'Client Genre Share', 'Overall Share'] %}
+          {% set is_per = True %}
+          {% set val, hi_val = format_col(data_disp.ix[inx,col], is_per, col), data_disp[col].max() %}
+          <td width="{{td_wd}}%" {{txtalign}} data-target=".highlight-target circle" data-highlight=".{{data_key}}" data-toggle="0">
+            <span>
+            {{ SVG('cell-bar.svg', width=52, height=18, x=0, y=12, data=val[0], text=val[1]+"%", hi=hi_val, lo=0,  attrs={'fill':'#936f00', 'stroke-width':0}, textattrs={'fill':'#fff', 'title': val[0]}) }}</td>
+<!--           <td><div style="background-color:#fff;align:right;width:{#{10}#}px;height:10px;border:1px solid white;"></div></td> -->
+        {% else %}
+          {% code %}
+            is_per = True if col=="Affinity" else is_per
+            val = format_col(data_disp.ix[inx, col], is_per, col)
+            if col == 'Network':
+              val[1] = val[1].split('Network')[0].strip()
+            if len(val[1])>=11:
+              val[1] = str(val[1])[:10] + '..'
+          {% end %}
+          <td width="{{td_wd}}%" data-sort-value="{{val[0]}}" {{txtalign}} data-target=".highlight-target circle" data-highlight=".{{data_key}}" data-toggle="0"><span title="{{val[0]}}">{{ val[1] }}</span></td>
+        {% end %}
+      {% end %}
+     </tr>
+    {% end %}
+   </tbody>
+  </table>
+  
+</div>
+<script type="text/javascript" src="{{static_url('/static/tablesorter/jquery.tablesorter.js')}}"></script>
+<script type="text/javascript">
+  $('#what_works_table').tablesorter({
+      selectorHeaders: '> thead.head2 > tr > th',
+      textExtraction: function(node) {
+        var attr = $(node).attr('data-sort-value');
+        if (typeof attr !== 'undefined' && attr !== false) {
+            return attr;
+        }
+        return $(node).text(); 
+    },
+    sortList: [[5,1]],
+  })
+</script>

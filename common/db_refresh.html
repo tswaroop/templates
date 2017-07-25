@@ -1,0 +1,24 @@
+{% code %}
+from templates.common import common
+import json
+# clearing the gramex DB
+DB.clear()
+
+#reads the ref_tg_mkt table and stores in DB
+common.get_tg_mkt()
+
+#reads the ref_tg_mkt table for barc tg_mkt
+common.get_barc_mkt()
+
+
+common.read_hierarchy()
+
+
+
+{% end %}
+<html>
+<body>
+<h1> Gramex DB Creation on port: {{handler.request.host.split(':')[1]}}</h1>
+
+</body>
+</html>
